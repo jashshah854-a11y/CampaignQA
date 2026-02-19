@@ -16,16 +16,19 @@ from api.routes import runs, reports, checks, stripe_webhook
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup: recover stalled runs from server restarts."""
-    db = get_supabase_admin()
-    cutoff = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
-    stalled = db.table("qa_runs").select("id").eq("status", "running").lt("started_at", cutoff).execute()
-    if stalled.data:
-        ids = [r["id"] for r in stalled.data]
-        db.table("qa_runs").update({
-            "status": "failed",
-            "error_message": "Server restart during run — please resubmit",
-        }).in_("id", ids).execute()
-        print(f"[startup] Recovered {len(ids)} stalled run(s)")
+    try:
+        db = get_supabase_admin()
+        cutoff = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
+        stalled = db.table("qa_runs").select("id").eq("status", "running").lt("started_at", cutoff).execute()
+        if stalled.data:
+            ids = [r["id"] for r in stalled.data]
+            db.table("qa_runs").update({
+                "status": "failed",
+                "error_message": "Server restart during run — please resubmit",
+            }).in_("id", ids).execute()
+            print(f"[startup] Recovered {len(ids)} stalled run(s)")
+    except Exception as e:
+        print(f"[startup] Supabase recovery skipped: {e}")
     yield
 
 

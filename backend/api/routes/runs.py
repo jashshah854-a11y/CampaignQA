@@ -30,12 +30,12 @@ from utils.auth import get_current_user
 from utils.url_parser import parse_url
 
 router = APIRouter(prefix="/api/v1/runs", tags=["runs"])
-db = get_supabase_admin()
 
 FREE_TIER_LIMIT = 3
 
 
 def _enforce_free_tier(user_id: str) -> None:
+    db = get_supabase_admin()
     profile = db.table("profiles").select("plan_tier,reports_used,reports_limit").eq("id", user_id).single().execute()
     if not profile.data:
         raise HTTPException(status_code=404, detail="Profile not found")
@@ -48,7 +48,7 @@ def _enforce_free_tier(user_id: str) -> None:
 
 
 def _increment_reports_used(user_id: str) -> None:
-    db.rpc("increment_reports_used", {"uid": user_id}).execute()
+    get_supabase_admin().rpc("increment_reports_used", {"uid": user_id}).execute()
 
 
 @router.post("", response_model=CreateRunResponse)
@@ -98,6 +98,7 @@ async def create_run(
         "campaign_objective": payload.campaign_objective,
         "started_at": datetime.now(timezone.utc).isoformat(),
     }
+    db = get_supabase_admin()
     run_result = db.table("qa_runs").insert(run_row).execute()
     run_id = run_result.data[0]["id"]
     ctx.run_id = run_id
@@ -148,6 +149,7 @@ async def create_run(
 
 @router.get("/{run_id}/status", response_model=RunStatusResponse)
 async def get_run_status(run_id: str, user: dict = Depends(get_current_user)):
+    db = get_supabase_admin()
     row = db.table("qa_runs").select(
         "id,status,total_checks,passed_checks,failed_checks,warning_checks,readiness_score"
     ).eq("id", run_id).eq("user_id", user["user_id"]).single().execute()
@@ -177,6 +179,7 @@ async def get_run_status(run_id: str, user: dict = Depends(get_current_user)):
 
 @router.get("/{run_id}/report", response_model=RunReportResponse)
 async def get_run_report(run_id: str, user: dict = Depends(get_current_user)):
+    db = get_supabase_admin()
     run = db.table("qa_runs").select("*").eq("id", run_id).eq("user_id", user["user_id"]).single().execute()
     if not run.data:
         raise HTTPException(status_code=404, detail="Run not found")
@@ -244,6 +247,7 @@ async def get_run_report(run_id: str, user: dict = Depends(get_current_user)):
 
 @router.get("", response_model=list[dict])
 async def list_runs(user: dict = Depends(get_current_user)):
+    db = get_supabase_admin()
     result = db.table("qa_runs").select(
         "id,run_name,platform,status,readiness_score,total_checks,passed_checks,failed_checks,created_at,completed_at"
     ).eq("user_id", user["user_id"]).order("created_at", desc=True).limit(50).execute()

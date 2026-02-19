@@ -6,11 +6,11 @@ from db.supabase_client import get_supabase_admin
 from core.models import RunStatus, ReportSummary, RunReportResponse, CheckResultResponse
 
 router = APIRouter(prefix="/api/v1/reports", tags=["reports"])
-db = get_supabase_admin()
 
 
 @router.get("/share/{token}")
 async def get_shared_report(token: str):
+    db = get_supabase_admin()
     run = db.table("qa_runs").select("*").eq("share_token", token).eq("is_public", True).single().execute()
     if not run.data:
         raise HTTPException(status_code=404, detail="Report not found or not shared publicly")
