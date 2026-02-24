@@ -4,7 +4,7 @@
 import secrets
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
 from agents.pipeline import (
     run_tier1_checks,
@@ -31,24 +31,8 @@ from utils.url_parser import parse_url
 
 router = APIRouter(prefix="/api/v1/runs", tags=["runs"])
 
-FREE_TIER_LIMIT = 3
-
-
-def _enforce_free_tier(user_id: str) -> None:
-    db = get_supabase_admin()
-    profile = db.table("profiles").select("plan_tier,reports_used,reports_limit").eq("id", user_id).single().execute()
-    if not profile.data:
-        raise HTTPException(status_code=404, detail="Profile not found")
-    p = profile.data
-    if p["plan_tier"] == "free" and p["reports_used"] >= p["reports_limit"]:
-        raise HTTPException(
-            status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail=f"Free tier limit of {p['reports_limit']} reports reached. Upgrade to Pro to continue.",
-        )
-
-
 def _increment_reports_used(user_id: str) -> None:
-    get_supabase_admin().rpc("increment_reports_used", {"uid": user_id}).execute()
+    pass  # unlimited access — no usage tracking
 
 
 @router.post("", response_model=CreateRunResponse)
@@ -58,7 +42,6 @@ async def create_run(
     user: dict = Depends(get_current_user),
 ):
     user_id = user["user_id"]
-    _enforce_free_tier(user_id)
 
     # Parse URLs
     parsed_urls = [parse_url(u) for u in payload.urls]
