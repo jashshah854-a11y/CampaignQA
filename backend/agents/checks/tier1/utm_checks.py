@@ -191,6 +191,50 @@ class UtmNoDuplicateParamsCheck(BaseCheck):
         )
 
 
+class UtmCrossUrlConsistencyCheck(BaseCheck):
+    """Detects utm_campaign (or utm_medium/utm_source) mismatches across URLs in the same run.
+    E.g. one URL has utm_campaign=bfcm, another has utm_campaign=BFCM or black_friday_2025.
+    This causes split attribution in GA4 — all ads in the same campaign should share the same values.
+    """
+    check_id = "utm_cross_url_consistency"
+    check_name = "UTM Campaign Consistency Across URLs"
+    check_category = "utm"
+    platforms = ["universal"]
+    severity = Severity.major
+    tier = 1
+
+    _PARAMS_TO_CHECK = ["utm_campaign", "utm_medium", "utm_source"]
+
+    def execute(self, ctx: RunContext) -> CheckResult:
+        if len(ctx.urls) < 2:
+            return self._result(CheckStatus.skipped, "Only one URL — cross-URL consistency check skipped")
+
+        violations: list[str] = []
+        for param in self._PARAMS_TO_CHECK:
+            values = {}
+            for u in ctx.urls:
+                v = u.params.get(param)
+                if v:
+                    values.setdefault(v.lower(), []).append(u.raw_url)
+
+            if len(values) > 1:
+                summary = ", ".join(f"'{v}' ({len(urls)} URL{'s' if len(urls) > 1 else ''})"
+                                    for v, urls in values.items())
+                violations.append(f"{param} has {len(values)} different values: {summary}")
+
+        if not violations:
+            return self._result(
+                CheckStatus.passed,
+                "UTM campaign, medium, and source values are consistent across all URLs",
+            )
+        return self._result(
+            CheckStatus.failed,
+            f"{len(violations)} UTM parameter(s) are inconsistent across URLs — will split attribution in GA4",
+            recommendation="All URLs in the same ad set should share the same utm_campaign, utm_medium, and utm_source values",
+            affected_items=violations,
+        )
+
+
 # Register all checks
 for cls in [
     UtmSourcePresentCheck,
@@ -200,5 +244,6 @@ for cls in [
     UtmCaseConsistencyCheck,
     UtmSourceMatchesPlatformCheck,
     UtmNoDuplicateParamsCheck,
+    UtmCrossUrlConsistencyCheck,
 ]:
     CheckRegistry.register(cls())

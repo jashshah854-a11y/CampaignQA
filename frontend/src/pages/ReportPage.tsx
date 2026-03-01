@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { api } from '@/lib/api'
 import type { RunReport, CheckResult } from '@/lib/api'
 import { CheckCard } from '@/components/CheckCard'
@@ -17,11 +17,13 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 export default function ReportPage({ shared = false }: { shared?: boolean }) {
   const { runId, token } = useParams<{ runId?: string; token?: string }>()
+  const navigate = useNavigate()
   const [report, setReport] = useState<RunReport | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeFilter, setActiveFilter] = useState<string>('all')
   const [shareMsg, setShareMsg] = useState('')
+  const [rerunning, setRerunning] = useState(false)
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -38,6 +40,17 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
     }
     fetchReport()
   }, [runId, token, shared])
+
+  const handleRerun = async () => {
+    if (!runId) return
+    setRerunning(true)
+    try {
+      const res = await api.rerun(runId)
+      navigate(`/runs/${res.run_id}`)
+    } catch {
+      setRerunning(false)
+    }
+  }
 
   const handleEnableShare = async () => {
     if (!report || !runId) return
@@ -108,6 +121,14 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
         {!shared && (
           <div className="text-right flex flex-col items-end gap-2">
             <div className="flex gap-2 print:hidden">
+              <button
+                onClick={handleRerun}
+                disabled={rerunning}
+                className="text-sm bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium px-4 py-2 rounded-lg transition-colors"
+                title="Re-run all checks on the same URLs"
+              >
+                {rerunning ? 'Starting…' : 'Re-run'}
+              </button>
               <button
                 onClick={() => window.print()}
                 className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2 rounded-lg transition-colors"

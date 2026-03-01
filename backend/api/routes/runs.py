@@ -235,3 +235,45 @@ async def list_runs(user: dict = Depends(get_current_user)):
         "id,run_name,platform,status,readiness_score,total_checks,passed_checks,failed_checks,created_at,completed_at"
     ).eq("user_id", user["user_id"]).order("created_at", desc=True).limit(50).execute()
     return result.data or []
+
+
+@router.post("/{run_id}/rerun", response_model=CreateRunResponse)
+async def rerun(
+    run_id: str,
+    background_tasks: BackgroundTasks,
+    user: dict = Depends(get_current_user),
+):
+    """Create a new run using the same input as an existing run."""
+    db = get_supabase_admin()
+    original = db.table("qa_runs").select(
+        "run_name,platform,raw_input,industry_vertical,campaign_objective"
+    ).eq("id", run_id).eq("user_id", user["user_id"]).single().execute()
+
+    if not original.data:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    raw = original.data["raw_input"] or {}
+    raw_urls = raw.get("urls", [])
+    if not raw_urls:
+        raise HTTPException(status_code=400, detail="Original run has no URLs to re-run")
+
+    from core.models import UrlInput, Platform
+    try:
+        url_inputs = [UrlInput(**u) for u in raw_urls]
+        platform = Platform(original.data["platform"])
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Cannot reconstruct original run: {exc}")
+
+    rebuild = CreateRunRequest(
+        run_name=f"{original.data['run_name']} (re-run)",
+        platform=platform,
+        urls=url_inputs,
+        campaign_name=raw.get("campaign_name"),
+        campaign_objective=raw.get("campaign_objective"),
+        industry_vertical=raw.get("industry_vertical"),
+        headline=raw.get("headline"),
+        primary_text=raw.get("primary_text"),
+        description=raw.get("description"),
+    )
+
+    return await create_run(rebuild, background_tasks, user)

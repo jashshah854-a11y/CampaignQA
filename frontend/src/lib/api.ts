@@ -118,4 +118,17 @@ export const api = {
 
   getSharedReport: (token: string) =>
     fetch(`${BASE_URL}/api/v1/reports/share/${token}`).then(r => r.json()) as Promise<RunReport>,
+
+  rerun: (runId: string) =>
+    apiFetch<CreateRunResponse>(`/api/v1/runs/${runId}/rerun`, { method: 'POST' }),
+
+  createCheckoutSession: (plan: 'pro' | 'agency') =>
+    apiFetch<{ checkout_url: string }>('/api/v1/stripe/create-checkout-session', {
+      method: 'POST',
+      body: JSON.stringify({
+        plan,
+        success_url: `${window.location.origin}/dashboard?upgraded=1`,
+        cancel_url: `${window.location.origin}/dashboard`,
+      }),
+    }),
 }
