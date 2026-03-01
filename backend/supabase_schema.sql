@@ -205,3 +205,6 @@ CREATE POLICY "users can delete own api keys" ON api_keys FOR DELETE USING (auth
 
 CREATE INDEX idx_api_keys_user_id  ON api_keys (user_id);
 CREATE INDEX idx_api_keys_key_hash ON api_keys (key_hash);
+
+-- Run notes — user-editable annotation on any run
+ALTER TABLE qa_runs ADD COLUMN IF NOT EXISTS notes text;

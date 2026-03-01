@@ -91,6 +91,7 @@ export interface RunReport {
   checks: CheckResult[]
   urls: unknown[]
   shareable_url?: string
+  notes?: string
 }
 
 export interface CreateRunResponse {
@@ -124,6 +125,9 @@ export const api = {
 
   deleteRun: (runId: string) =>
     apiFetch<void>(`/api/v1/runs/${runId}`, { method: 'DELETE' }),
+
+  updateRun: (runId: string, data: { notes?: string }) =>
+    apiFetch<{ status: string }>(`/api/v1/runs/${runId}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   getProfile: () =>
     apiFetch<{ id: string; email: string; full_name: string | null; company_name: string | null; plan_tier: string; reports_used: number; reports_limit: number; created_at: string }>('/api/v1/profile'),

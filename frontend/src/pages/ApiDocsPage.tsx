@@ -252,6 +252,23 @@ python3 -c "import sys; sys.exit(0 if $SCORE >= 75 else 1)"
 echo "CI check passed!"`}</Code>
       </div>
 
+      {/* Badge endpoint */}
+      <Section
+        title="Shields.io Badge"
+        method="GET"
+        path="/api/v1/pub/runs/{run_id}/badge"
+        desc="Returns a shields.io-compatible JSON payload. Embed your LaunchProof score directly in GitHub READMEs or CI dashboards."
+      >
+        <Code>{`curl ${BASE}/api/v1/pub/runs/{run_id}/badge \\
+  -H "X-API-Key: lp_your_key"
+
+# → { "schemaVersion": 1, "label": "LaunchProof", "message": "87/100", "color": "brightgreen" }
+
+# Embed in README.md:
+![LaunchProof](https://img.shields.io/endpoint?url=https%3A%2F%2Fyourapidomain%2Fapi%2Fv1%2Fpub%2Fruns%2F{run_id}%2Fbadge&logo=data:image%2Fsvg)`}</Code>
+        <p className="text-xs text-slate-500 mt-3">Colors: brightgreen (≥80), yellow (≥60), red (&lt;60). Running shows lightgrey.</p>
+      </Section>
+
       {/* Rate limits */}
       <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-800">
         <p className="font-semibold mb-1">Rate limits &amp; limits</p>

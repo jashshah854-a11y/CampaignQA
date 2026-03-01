@@ -27,6 +27,9 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
   const [compareRuns, setCompareRuns] = useState<{ id: string; run_name: string }[]>([])
   const [showCompare, setShowCompare] = useState(false)
   const [benchmark, setBenchmark] = useState<{ check_id: string; pass_rate_pct: number }[]>([])
+  const [notes, setNotes] = useState('')
+  const [notesSaving, setNotesSaving] = useState(false)
+  const [notesSaved, setNotesSaved] = useState(false)
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -35,6 +38,7 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
           ? await api.getSharedReport(token)
           : await api.getReport(runId!)
         setReport(data)
+        setNotes(data.notes || '')
         // Fire benchmark fetch in parallel — ignore if fails (no data yet)
         if (!shared) {
           api.getBenchmark(data.platform).then(setBenchmark).catch(() => {})
@@ -128,6 +132,28 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
     }
   }
 
+  const handleSaveNotes = async () => {
+    if (!runId) return
+    setNotesSaving(true)
+    try {
+      await api.updateRun(runId, { notes })
+      setNotesSaved(true)
+      setTimeout(() => setNotesSaved(false), 2500)
+    } catch { /* silent */ }
+    finally { setNotesSaving(false) }
+  }
+
+  const handleDownloadJson = () => {
+    if (!report) return
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `launchproof-${report.run_name.replace(/\s+/g, '-').toLowerCase()}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -195,6 +221,13 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
                 title="Download a prioritized fix checklist as Markdown"
               >
                 Fix Checklist
+              </button>
+              <button
+                onClick={handleDownloadJson}
+                className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2 rounded-lg transition-colors"
+                title="Download full report as JSON"
+              >
+                Export JSON
               </button>
               <button
                 onClick={() => window.print()}
@@ -361,6 +394,33 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
           )}
         </div>
       </div>
+
+      {/* Run notes — private annotation, not shown on shared reports */}
+      {!shared && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 mt-6 print:hidden">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-slate-700">Notes</h3>
+            <span className="text-xs text-slate-400">Private — not shown on shared reports</span>
+          </div>
+          <textarea
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            placeholder="Add context, action items, or client feedback…"
+            rows={3}
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+          />
+          <div className="flex items-center gap-3 mt-2">
+            <button
+              onClick={handleSaveNotes}
+              disabled={notesSaving}
+              className="text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium px-4 py-1.5 rounded-lg transition-colors"
+            >
+              {notesSaving ? 'Saving…' : 'Save Notes'}
+            </button>
+            {notesSaved && <span className="text-xs text-green-600 font-medium">Saved!</span>}
+          </div>
+        </div>
+      )}
 
       {/* CTA for shared reports */}
       {shared && (

@@ -236,3 +236,40 @@ async def pub_list_runs(user: dict = Depends(get_user_from_api_key)):
         "id,run_name,platform,status,readiness_score,passed_checks,failed_checks,created_at,completed_at"
     ).eq("user_id", user["user_id"]).order("created_at", desc=True).limit(20).execute()
     return result.data or []
+
+
+@router.get("/runs/{run_id}/badge")
+async def pub_get_badge(run_id: str, user: dict = Depends(get_user_from_api_key)):
+    """
+    Shields.io-compatible badge JSON for embedding in README or CI dashboards.
+
+    Use with: https://img.shields.io/endpoint?url=<encoded_badge_url>
+
+    Returns:
+      { "schemaVersion": 1, "label": "LaunchProof", "message": "87/100", "color": "brightgreen" }
+    """
+    db = get_supabase_admin()
+    row = db.table("qa_runs").select(
+        "status,readiness_score"
+    ).eq("id", run_id).eq("user_id", user["user_id"]).single().execute()
+
+    if not row.data:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    status = row.data.get("status", "pending")
+    score = row.data.get("readiness_score")
+
+    if status == "failed":
+        return {"schemaVersion": 1, "label": "LaunchProof", "message": "failed", "color": "red"}
+    if status in ("pending", "running") or score is None:
+        return {"schemaVersion": 1, "label": "LaunchProof", "message": "running…", "color": "lightgrey"}
+
+    rounded = round(score)
+    if rounded >= 80:
+        color = "brightgreen"
+    elif rounded >= 60:
+        color = "yellow"
+    else:
+        color = "red"
+
+    return {"schemaVersion": 1, "label": "LaunchProof", "message": f"{rounded}/100", "color": color}

@@ -160,7 +160,7 @@ async def get_run_status(run_id: str, user: dict = Depends(get_current_user)):
     )
 
 
-@router.get("/{run_id}/report", response_model=RunReportResponse)
+@router.get("/{run_id}/report")
 async def get_run_report(run_id: str, user: dict = Depends(get_current_user)):
     db = get_supabase_admin()
     run = db.table("qa_runs").select("*").eq("id", run_id).eq("user_id", user["user_id"]).single().execute()
@@ -200,7 +200,7 @@ async def get_run_report(run_id: str, user: dict = Depends(get_current_user)):
     frontend_url = settings_obj.cors_origins_list[0] if settings_obj.cors_origins_list else ""
     share_url = f"{frontend_url}/reports/share/{r.get('share_token')}" if r.get("share_token") else None
 
-    return RunReportResponse(
+    report = RunReportResponse(
         run_id=run_id,
         run_name=r["run_name"],
         platform=r["platform"],
@@ -226,6 +226,8 @@ async def get_run_report(run_id: str, user: dict = Depends(get_current_user)):
         urls=urls.data or [],
         shareable_url=share_url,
     )
+    # Append notes (extra field not in Pydantic model)
+    return {**report.dict(), "notes": r.get("notes")}
 
 
 @router.get("", response_model=list[dict])
@@ -283,7 +285,6 @@ async def rerun(
 async def delete_run(run_id: str, user: dict = Depends(get_current_user)):
     """Hard-delete a run and its associated check_results and campaign_urls."""
     db = get_supabase_admin()
-    # Verify ownership before deleting
     existing = db.table("qa_runs").select("id").eq("id", run_id).eq("user_id", user["user_id"]).single().execute()
     if not existing.data:
         raise HTTPException(status_code=404, detail="Run not found")
@@ -291,3 +292,19 @@ async def delete_run(run_id: str, user: dict = Depends(get_current_user)):
     db.table("check_results").delete().eq("run_id", run_id).execute()
     db.table("campaign_urls").delete().eq("run_id", run_id).execute()
     db.table("qa_runs").delete().eq("id", run_id).execute()
+
+
+@router.patch("/{run_id}")
+async def update_run(run_id: str, body: dict, user: dict = Depends(get_current_user)):
+    """Update mutable run fields. Currently supports: notes (string)."""
+    allowed = {k: v for k, v in body.items() if k in ("notes",)}
+    if not allowed:
+        raise HTTPException(status_code=400, detail="No updatable fields provided")
+
+    db = get_supabase_admin()
+    existing = db.table("qa_runs").select("id").eq("id", run_id).eq("user_id", user["user_id"]).single().execute()
+    if not existing.data:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    db.table("qa_runs").update(allowed).eq("id", run_id).execute()
+    return {"status": "updated"}
