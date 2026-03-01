@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     stripe_price_agency_monthly: str = ""
     environment: str = "development"
     cors_origins: str = "http://localhost:5173"
+    virustotal_api_key: str = ""
 
     @property
     def cors_origins_list(self) -> list[str]:

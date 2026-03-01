@@ -106,14 +106,23 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
           </p>
         </div>
         {!shared && (
-          <div className="text-right">
-            <button
-              onClick={handleEnableShare}
-              className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              Share Report
-            </button>
-            {shareMsg && <p className="text-xs text-green-600 mt-1">{shareMsg}</p>}
+          <div className="text-right flex flex-col items-end gap-2">
+            <div className="flex gap-2 print:hidden">
+              <button
+                onClick={() => window.print()}
+                className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2 rounded-lg transition-colors"
+                title="Save as PDF via your browser's Print dialog"
+              >
+                Export PDF
+              </button>
+              <button
+                onClick={handleEnableShare}
+                className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2 rounded-lg transition-colors"
+              >
+                Share Report
+              </button>
+            </div>
+            {shareMsg && <p className="text-xs text-green-600">{shareMsg}</p>}
           </div>
         )}
       </div>
