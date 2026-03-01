@@ -174,6 +174,7 @@ export default function DashboardPage() {
   const [upgradeLoading, setUpgradeLoading] = useState(false)
   const [upgradeError, setUpgradeError] = useState('')
   const [planTier, setPlanTier] = useState<string>('free')
+  const [search, setSearch] = useState('')
   const [searchParams] = useSearchParams()
   const justUpgraded = searchParams.get('upgraded') === '1'
 
@@ -287,9 +288,23 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {/* Search */}
+          {runs.length > 3 && (
+            <div className="mb-4">
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search runs by name or platform…"
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
+
           {/* Run list */}
           <div className="space-y-3">
-            {runs.map(run => (
+            {runs.filter(r =>
+              !search || r.run_name.toLowerCase().includes(search.toLowerCase()) || r.platform.toLowerCase().includes(search.toLowerCase())
+            ).map(run => (
               <div
                 key={run.id}
                 onClick={() => handleRowClick(run)}

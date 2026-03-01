@@ -141,6 +141,12 @@ export const api = {
       }),
     }),
 
+  // ── Benchmark ─────────────────────────────────────────────────────────────
+  getBenchmark: (platform: string, industryVertical?: string) =>
+    apiFetch<{ check_id: string; check_category: string; pass_rate_pct: number }[]>(
+      `/api/v1/benchmark?platform=${platform}${industryVertical ? `&industry_vertical=${industryVertical}` : ''}`
+    ),
+
   // ── API Keys ──────────────────────────────────────────────────────────────
   listApiKeys: () =>
     apiFetch<{ id: string; name: string; key_prefix: string; created_at: string; last_used_at: string | null }[]>('/api/v1/api-keys'),
