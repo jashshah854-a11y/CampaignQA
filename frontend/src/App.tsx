@@ -9,6 +9,7 @@ import RunPage from '@/pages/RunPage'
 import ReportPage from '@/pages/ReportPage'
 import SharedReportPage from '@/pages/SharedReportPage'
 import SettingsPage from '@/pages/SettingsPage'
+import ComparePage from '@/pages/ComparePage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth()
@@ -36,6 +37,7 @@ function AppRoutes() {
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/new"       element={<ProtectedRoute><NewRunPage /></ProtectedRoute>} />
       <Route path="/settings"  element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+      <Route path="/compare"   element={<ProtectedRoute><ComparePage /></ProtectedRoute>} />
       <Route path="/runs/:runId"        element={<ProtectedRoute><RunPage /></ProtectedRoute>} />
       <Route path="/runs/:runId/report" element={<ProtectedRoute><ReportPage /></ProtectedRoute>} />
 

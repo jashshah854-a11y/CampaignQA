@@ -118,6 +118,25 @@ def update_run_summary(run_id: str, all_results: list[CheckResult], status: str 
     return score
 
 
+def _notify_user(user_id: str, run_id: str, run_name: str, score: float) -> None:
+    """Send run-complete email. Silently no-ops on any failure."""
+    try:
+        from utils.email import send_run_complete_email
+        from core.config import get_settings
+        db = get_supabase_admin()
+        profile_row = db.table("profiles").select("email").eq("id", user_id).single().execute()
+        email = (profile_row.data or {}).get("email")
+        if not email:
+            return
+        settings = get_settings()
+        # Build the report URL from the first CORS origin (the frontend domain)
+        origin = settings.cors_origins_list[0].rstrip("/")
+        run_url = f"{origin}/runs/{run_id}/report"
+        send_run_complete_email(email, run_name, score, run_url)
+    except Exception:
+        pass
+
+
 def run_tier2_background(run_id: str, user_id: str, ctx: RunContext, tier1_results: list[CheckResult]) -> None:
     """
     Background task: runs Tier 2 checks, writes results, updates run summary.
@@ -132,7 +151,12 @@ def run_tier2_background(run_id: str, user_id: str, ctx: RunContext, tier1_resul
         write_check_results(run_id, user_id, tier2_results)
 
         all_results = tier1_results + tier2_results
-        update_run_summary(run_id, all_results, status="completed")
+        score = update_run_summary(run_id, all_results, status="completed")
+
+        # Fire-and-forget email notification
+        run_row = db.table("qa_runs").select("run_name").eq("id", run_id).single().execute()
+        run_name = (run_row.data or {}).get("run_name", "QA Run")
+        _notify_user(user_id, run_id, run_name, score)
 
     except Exception as exc:
         db.table("qa_runs").update({

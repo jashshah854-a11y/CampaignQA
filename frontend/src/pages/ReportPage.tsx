@@ -24,6 +24,8 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
   const [activeFilter, setActiveFilter] = useState<string>('all')
   const [shareMsg, setShareMsg] = useState('')
   const [rerunning, setRerunning] = useState(false)
+  const [compareRuns, setCompareRuns] = useState<{ id: string; run_name: string }[]>([])
+  const [showCompare, setShowCompare] = useState(false)
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -50,6 +52,20 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
     } catch {
       setRerunning(false)
     }
+  }
+
+  const handleOpenCompare = async () => {
+    if (!showCompare) {
+      if (compareRuns.length === 0) {
+        const all = await api.listRuns().catch(() => [])
+        setCompareRuns(
+          (all as { id: string; run_name: string; status: string }[])
+            .filter(r => r.status === 'completed' && r.id !== runId)
+            .slice(0, 20)
+        )
+      }
+    }
+    setShowCompare(v => !v)
   }
 
   const handleEnableShare = async () => {
@@ -142,6 +158,34 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
               >
                 Share Report
               </button>
+              <div className="relative">
+                <button
+                  onClick={handleOpenCompare}
+                  className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2 rounded-lg transition-colors"
+                >
+                  Compare
+                </button>
+                {showCompare && (
+                  <div className="absolute right-0 top-10 bg-white border border-slate-200 rounded-xl shadow-lg py-2 z-10 min-w-[220px]">
+                    {compareRuns.length === 0 ? (
+                      <p className="text-xs text-slate-400 px-4 py-2">No other completed runs</p>
+                    ) : (
+                      <>
+                        <p className="text-xs text-slate-400 px-4 pb-1 font-medium">Compare with:</p>
+                        {compareRuns.map(r => (
+                          <button
+                            key={r.id}
+                            onClick={() => navigate(`/compare?a=${runId}&b=${r.id}`)}
+                            className="w-full text-left px-4 py-1.5 text-sm text-slate-700 hover:bg-slate-50 truncate"
+                          >
+                            {r.run_name}
+                          </button>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
             {shareMsg && <p className="text-xs text-green-600">{shareMsg}</p>}
           </div>

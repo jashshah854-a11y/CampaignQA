@@ -235,6 +235,101 @@ class UtmCrossUrlConsistencyCheck(BaseCheck):
         )
 
 
+class UtmContentTermBestPracticeCheck(BaseCheck):
+    """
+    Warns when utm_content and utm_term are missing.
+    - utm_content: identifies which ad creative (critical for A/B testing)
+    - utm_term: keyword for search campaigns (Google/Bing)
+    Severity is minor — informational nudge, not a hard fail.
+    """
+    check_id = "utm_content_term_best_practice"
+    check_name = "UTM Content & Term Parameters (Best Practice)"
+    check_category = "utm"
+    platforms = ["universal"]
+    severity = Severity.minor
+    tier = 1
+
+    def execute(self, ctx: RunContext) -> CheckResult:
+        missing_content = [u.raw_url for u in ctx.urls if "utm_content" not in u.params]
+        missing_term = (
+            [u.raw_url for u in ctx.urls if "utm_term" not in u.params]
+            if ctx.platform.value in ("google",)
+            else []
+        )
+
+        issues: list[str] = []
+        if missing_content:
+            issues.append(f"utm_content missing on {len(missing_content)} URL(s) — can't distinguish creatives in GA4")
+        if missing_term:
+            issues.append(f"utm_term missing on {len(missing_term)} URL(s) — keyword data lost for search campaigns")
+
+        if not issues:
+            return self._result(
+                CheckStatus.passed,
+                "utm_content and utm_term are present — full attribution tracking enabled",
+            )
+        return self._result(
+            CheckStatus.warning,
+            "; ".join(issues),
+            recommendation="Add utm_content=<creative_variant> to all URLs to enable A/B reporting. Add utm_term={{keyword}} for search campaigns.",
+            affected_items=list(dict.fromkeys(missing_content + missing_term)),
+        )
+
+
+class PlatformUtmMediumAlignmentCheck(BaseCheck):
+    """
+    Checks that utm_medium matches the platform type.
+    Meta/TikTok/LinkedIn → paid_social (not cpc)
+    Google → cpc or paid_search (not paid_social)
+    Mismatches cause channel-split errors in GA4's default channel grouping.
+    """
+    check_id = "utm_medium_platform_alignment"
+    check_name = "UTM Medium Matches Platform Type"
+    check_category = "utm"
+    platforms = ["meta", "google", "tiktok", "linkedin"]
+    severity = Severity.major
+    tier = 1
+
+    _SOCIAL_MEDIUMS = {"paid_social", "social", "paid-social"}
+    _SEARCH_MEDIUMS = {"cpc", "paid_search", "ppc", "paid-search"}
+    _SOCIAL_PLATFORMS = {"meta", "tiktok", "linkedin"}
+    _SEARCH_PLATFORMS = {"google"}
+
+    def execute(self, ctx: RunContext) -> CheckResult:
+        platform = ctx.platform.value
+        mismatched: list[str] = []
+
+        for u in ctx.urls:
+            medium = u.params.get("utm_medium", "").lower()
+            if not medium:
+                continue
+
+            if platform in self._SOCIAL_PLATFORMS and medium in self._SEARCH_MEDIUMS:
+                mismatched.append(
+                    f"{u.raw_url} (utm_medium='{medium}' on {platform} — use 'paid_social')"
+                )
+            elif platform in self._SEARCH_PLATFORMS and medium in self._SOCIAL_MEDIUMS:
+                mismatched.append(
+                    f"{u.raw_url} (utm_medium='{medium}' on {platform} — use 'cpc')"
+                )
+
+        if not mismatched:
+            return self._result(
+                CheckStatus.passed,
+                f"utm_medium values match expected type for {platform} campaigns",
+            )
+        return self._result(
+            CheckStatus.failed,
+            f"utm_medium mismatch on {len(mismatched)} URL(s) — GA4 will mis-classify channel",
+            recommendation=(
+                "Use utm_medium=paid_social for Meta/TikTok/LinkedIn ads. "
+                "Use utm_medium=cpc for Google search. "
+                "Mismatches break GA4's default channel grouping report."
+            ),
+            affected_items=mismatched,
+        )
+
+
 # Register all checks
 for cls in [
     UtmSourcePresentCheck,
@@ -245,5 +340,7 @@ for cls in [
     UtmSourceMatchesPlatformCheck,
     UtmNoDuplicateParamsCheck,
     UtmCrossUrlConsistencyCheck,
+    UtmContentTermBestPracticeCheck,
+    PlatformUtmMediumAlignmentCheck,
 ]:
     CheckRegistry.register(cls())

@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     environment: str = "development"
     cors_origins: str = "http://localhost:5173"
     virustotal_api_key: str = ""
+    resend_api_key: str = ""
+    notify_email_from: str = "LaunchProof <noreply@launchproof.io>"
 
     @property
     def cors_origins_list(self) -> list[str]:

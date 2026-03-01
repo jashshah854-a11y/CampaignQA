@@ -78,7 +78,18 @@ function ScoreTrend({ runs }: { runs: RunRow[] }) {
 }
 
 /** Floating context menu for a run row */
-function RunMenu({ runId, onDelete }: { runId: string; onDelete: (id: string) => void }) {
+function RunMenu({
+  runId,
+  runStatus,
+  allRuns,
+  onDelete,
+}: {
+  runId: string
+  runStatus: string
+  allRuns: RunRow[]
+  onDelete: (id: string) => void
+}) {
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -94,6 +105,8 @@ function RunMenu({ runId, onDelete }: { runId: string; onDelete: (id: string) =>
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  const otherCompleted = allRuns.filter(r => r.id !== runId && r.status === 'completed')
+
   return (
     <div ref={ref} className="relative flex-shrink-0" onClick={e => e.preventDefault()}>
       <button
@@ -104,14 +117,30 @@ function RunMenu({ runId, onDelete }: { runId: string; onDelete: (id: string) =>
         ⋯
       </button>
       {open && (
-        <div className="absolute right-0 top-7 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-10 min-w-[140px]">
+        <div className="absolute right-0 top-7 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-10 min-w-[160px]">
           {!confirming ? (
-            <button
-              onClick={() => setConfirming(true)}
-              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-            >
-              Delete run
-            </button>
+            <>
+              {runStatus === 'completed' && otherCompleted.length > 0 && (
+                <div className="border-b border-slate-100 pb-1 mb-1">
+                  <p className="text-xs text-slate-400 px-4 pt-1 pb-0.5 font-medium">Compare with:</p>
+                  {otherCompleted.slice(0, 5).map(r => (
+                    <button
+                      key={r.id}
+                      onClick={() => { navigate(`/compare?a=${runId}&b=${r.id}`); setOpen(false) }}
+                      className="w-full text-left px-4 py-1.5 text-xs text-slate-700 hover:bg-slate-50 truncate"
+                    >
+                      {r.run_name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button
+                onClick={() => setConfirming(true)}
+                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+              >
+                Delete run
+              </button>
+            </>
           ) : (
             <div className="px-4 py-2">
               <p className="text-xs text-slate-600 mb-2">Delete this run?</p>
@@ -295,7 +324,7 @@ export default function DashboardPage() {
                       )}
                     </div>
                   </div>
-                  <RunMenu runId={run.id} onDelete={handleDelete} />
+                  <RunMenu runId={run.id} runStatus={run.status} allRuns={runs} onDelete={handleDelete} />
                 </div>
               </div>
             ))}
