@@ -270,7 +270,10 @@ export default function SettingsPage() {
         <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-slate-700">API Keys</h2>
-            <span className="text-xs text-slate-400">Max 5 keys</span>
+            <div className="flex items-center gap-3">
+              <Link to="/api-docs" className="text-xs text-blue-600 hover:underline">View API docs →</Link>
+              <span className="text-xs text-slate-400">Max 5 keys</span>
+            </div>
           </div>
 
           {/* Newly created key — show once */}
