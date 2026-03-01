@@ -119,20 +119,25 @@ def update_run_summary(run_id: str, all_results: list[CheckResult], status: str 
 
 
 def _notify_user(user_id: str, run_id: str, run_name: str, score: float) -> None:
-    """Send run-complete email. Silently no-ops on any failure."""
+    """Send run-complete email and/or Slack notification. Silently no-ops on any failure."""
     try:
         from utils.email import send_run_complete_email
+        from utils.slack import send_slack_notification
         from core.config import get_settings
         db = get_supabase_admin()
-        profile_row = db.table("profiles").select("email").eq("id", user_id).single().execute()
-        email = (profile_row.data or {}).get("email")
-        if not email:
-            return
+        profile_row = db.table("profiles").select("email,slack_webhook_url").eq("id", user_id).single().execute()
+        profile = profile_row.data or {}
         settings = get_settings()
-        # Build the report URL from the first CORS origin (the frontend domain)
         origin = settings.cors_origins_list[0].rstrip("/")
         run_url = f"{origin}/runs/{run_id}/report"
-        send_run_complete_email(email, run_name, score, run_url)
+
+        email = profile.get("email")
+        if email:
+            send_run_complete_email(email, run_name, score, run_url)
+
+        slack_webhook = profile.get("slack_webhook_url")
+        if slack_webhook:
+            send_slack_notification(slack_webhook, run_name, score, run_url)
     except Exception:
         pass
 

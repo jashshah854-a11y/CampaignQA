@@ -146,6 +146,69 @@ class UrlNoTrailingSpacesCheck(BaseCheck):
         )
 
 
+class UrlDuplicateCheck(BaseCheck):
+    """Catches duplicate destination URLs within the same run.
+    Identical URLs inflate check counts and often indicate a copy-paste error.
+    """
+    check_id = "url_no_duplicates"
+    check_name = "No Duplicate Destination URLs"
+    check_category = "url"
+    platforms = ["universal"]
+    severity = Severity.major
+    tier = 1
+
+    def execute(self, ctx: RunContext) -> CheckResult:
+        seen: dict[str, int] = {}
+        for u in ctx.urls:
+            normalized = u.raw_url.strip().rstrip("/").lower()
+            seen[normalized] = seen.get(normalized, 0) + 1
+
+        dupes = {url: count for url, count in seen.items() if count > 1}
+        if not dupes:
+            return self._result(CheckStatus.passed, f"All {len(ctx.urls)} URL(s) are unique")
+        return self._result(
+            CheckStatus.failed,
+            f"{len(dupes)} duplicate URL(s) found — removes variation from A/B tests and wastes budget",
+            recommendation="Ensure each URL in the run is unique. Each ad variant should have a distinct destination URL.",
+            affected_items=[f"{url} (×{count})" for url, count in dupes.items()],
+        )
+
+
+class UtmQueryStringOrderCheck(BaseCheck):
+    """Warns when UTM parameters are buried after other query parameters.
+    Some ad servers truncate long query strings — UTM params should come first.
+    """
+    check_id = "utm_query_string_order"
+    check_name = "UTM Parameters Early in Query String"
+    check_category = "utm"
+    platforms = ["universal"]
+    severity = Severity.minor
+    tier = 1
+
+    def execute(self, ctx: RunContext) -> CheckResult:
+        from urllib.parse import urlparse, parse_qsl
+        bad: list[str] = []
+        for u in ctx.urls:
+            try:
+                parsed = urlparse(u.raw_url)
+                pairs = parse_qsl(parsed.query, keep_blank_values=True)
+                keys = [k for k, _ in pairs]
+                utm_indices = [i for i, k in enumerate(keys) if k.startswith("utm_")]
+                non_utm_before = any(i < min(utm_indices) for i in range(len(keys)) if not keys[i].startswith("utm_"))
+                if utm_indices and non_utm_before:
+                    bad.append(u.raw_url)
+            except Exception:
+                pass
+        if not bad:
+            return self._result(CheckStatus.passed, "UTM parameters appear early in the query string")
+        return self._result(
+            CheckStatus.warning,
+            f"UTM parameters are not first in the query string on {len(bad)} URL(s)",
+            recommendation="Place UTM parameters before other query parameters (e.g. ?utm_source=…&other_param=…) to prevent truncation",
+            affected_items=bad,
+        )
+
+
 # Register all
 for cls in [
     HttpsCheck,
@@ -154,5 +217,7 @@ for cls in [
     UrlUniformDomainCheck,
     UrlExcessiveLengthCheck,
     UrlNoTrailingSpacesCheck,
+    UrlDuplicateCheck,
+    UtmQueryStringOrderCheck,
 ]:
     CheckRegistry.register(cls())

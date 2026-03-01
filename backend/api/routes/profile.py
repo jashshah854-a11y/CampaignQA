@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/v1/profile", tags=["profile"])
 async def get_profile(user: dict = Depends(get_current_user)):
     db = get_supabase_admin()
     row = db.table("profiles").select(
-        "id,email,full_name,company_name,plan_tier,reports_used,reports_limit,created_at"
+        "id,email,full_name,company_name,plan_tier,reports_used,reports_limit,slack_webhook_url,created_at"
     ).eq("id", user["user_id"]).single().execute()
 
     if not row.data:
@@ -22,8 +22,8 @@ async def get_profile(user: dict = Depends(get_current_user)):
 
 @router.patch("")
 async def update_profile(body: dict, user: dict = Depends(get_current_user)):
-    """Update mutable profile fields: full_name, company_name."""
-    allowed = {k: v for k, v in body.items() if k in ("full_name", "company_name")}
+    """Update mutable profile fields: full_name, company_name, slack_webhook_url."""
+    allowed = {k: v for k, v in body.items() if k in ("full_name", "company_name", "slack_webhook_url")}
     if not allowed:
         raise HTTPException(status_code=400, detail="No updatable fields provided")
 

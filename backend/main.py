@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import get_settings
 from db.supabase_client import get_supabase_admin
-from api.routes import runs, reports, checks, stripe_webhook, profile
+from api.routes import runs, reports, checks, stripe_webhook, profile, api_keys
 
 
 @asynccontextmanager
@@ -53,6 +53,7 @@ app.include_router(reports.router)
 app.include_router(checks.router)
 app.include_router(stripe_webhook.router)
 app.include_router(profile.router)
+app.include_router(api_keys.router)
 
 
 @app.get("/health")

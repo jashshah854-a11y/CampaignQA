@@ -179,3 +179,29 @@ WITH DATA;
 
 CREATE INDEX idx_benchmark_check_id ON benchmark_snapshots (check_id);
 CREATE INDEX idx_benchmark_platform ON benchmark_snapshots (platform, industry_vertical);
+
+-- ============================================================
+-- MIGRATIONS (run these separately if schema already exists)
+-- ============================================================
+
+-- Add Slack webhook URL to profiles (notification preference)
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS slack_webhook_url text;
+
+-- API keys table (Pro/Agency only — programmatic access)
+CREATE TABLE IF NOT EXISTS api_keys (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name         text NOT NULL DEFAULT 'Default',
+  key_prefix   text NOT NULL,             -- first 8 chars (lp_xxxxxx) for display
+  key_hash     text NOT NULL UNIQUE,      -- SHA-256 of the full key
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  last_used_at timestamptz
+);
+
+ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "users can view own api keys"   ON api_keys FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "users can insert own api keys" ON api_keys FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "users can delete own api keys" ON api_keys FOR DELETE USING (auth.uid() = user_id);
+
+CREATE INDEX idx_api_keys_user_id  ON api_keys (user_id);
+CREATE INDEX idx_api_keys_key_hash ON api_keys (key_hash);

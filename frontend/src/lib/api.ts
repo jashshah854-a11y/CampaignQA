@@ -128,7 +128,7 @@ export const api = {
   getProfile: () =>
     apiFetch<{ id: string; email: string; full_name: string | null; company_name: string | null; plan_tier: string; reports_used: number; reports_limit: number; created_at: string }>('/api/v1/profile'),
 
-  updateProfile: (data: { full_name?: string; company_name?: string }) =>
+  updateProfile: (data: { full_name?: string; company_name?: string; slack_webhook_url?: string }) =>
     apiFetch<{ status: string }>('/api/v1/profile', { method: 'PATCH', body: JSON.stringify(data) }),
 
   createCheckoutSession: (plan: 'pro' | 'agency') =>
@@ -140,4 +140,17 @@ export const api = {
         cancel_url: `${window.location.origin}/dashboard`,
       }),
     }),
+
+  // ── API Keys ──────────────────────────────────────────────────────────────
+  listApiKeys: () =>
+    apiFetch<{ id: string; name: string; key_prefix: string; created_at: string; last_used_at: string | null }[]>('/api/v1/api-keys'),
+
+  createApiKey: (name: string) =>
+    apiFetch<{ key: string; prefix: string; name: string; message: string }>('/api/v1/api-keys', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    }),
+
+  deleteApiKey: (id: string) =>
+    apiFetch<void>(`/api/v1/api-keys/${id}`, { method: 'DELETE' }),
 }

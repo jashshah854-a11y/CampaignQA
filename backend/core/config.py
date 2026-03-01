@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     virustotal_api_key: str = ""
     resend_api_key: str = ""
     notify_email_from: str = "LaunchProof <noreply@launchproof.io>"
+    app_base_url: str = "https://app.launchproof.io"
 
     @property
     def cors_origins_list(self) -> list[str]:
