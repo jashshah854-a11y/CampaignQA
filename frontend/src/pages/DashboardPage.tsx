@@ -177,6 +177,7 @@ export default function DashboardPage() {
   const [upgradeError, setUpgradeError] = useState('')
   const [planTier, setPlanTier] = useState<string>('free')
   const [search, setSearch] = useState('')
+  const [platformFilter, setPlatformFilter] = useState<string>('all')
   const [searchParams] = useSearchParams()
   const justUpgraded = searchParams.get('upgraded') === '1'
 
@@ -184,6 +185,18 @@ export default function DashboardPage() {
     api.listRuns().then(data => setRuns(data as RunRow[])).finally(() => setLoading(false))
     api.getProfile().then(p => setPlanTier(p.plan_tier)).catch(() => {})
   }, [])
+
+  // 'N' shortcut → new run (only when not focused on an input)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName
+      if (e.key === 'n' && tag !== 'INPUT' && tag !== 'TEXTAREA' && !e.metaKey && !e.ctrlKey) {
+        navigate('/new')
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [navigate])
 
   const handleUpgrade = async (plan: 'pro' | 'agency') => {
     setUpgradeError('')
@@ -226,6 +239,7 @@ export default function DashboardPage() {
           <Link to="/settings" className="text-sm text-slate-500 hover:text-slate-700">Settings</Link>
           <Link
             to="/new"
+            title="Shortcut: N"
             className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors"
           >
             + New QA Run
@@ -290,6 +304,29 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {/* Platform filter tabs — shown when 2+ distinct platforms */}
+          {(() => {
+            const platforms = [...new Set(runs.map(r => r.platform))]
+            if (platforms.length < 2) return null
+            const tabs = [{ id: 'all', label: 'All' }, ...platforms.map(p => ({ id: p, label: (PLATFORM_EMOJI[p] || '') + ' ' + p.charAt(0).toUpperCase() + p.slice(1) }))]
+            return (
+              <div className="flex gap-2 mb-4 flex-wrap">
+                {tabs.map(t => (
+                  <button
+                    key={t.id}
+                    onClick={() => setPlatformFilter(t.id)}
+                    className={cn(
+                      'text-xs px-3 py-1.5 rounded-full font-medium transition-colors',
+                      platformFilter === t.id ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+                    )}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            )
+          })()}
+
           {/* Search */}
           {runs.length > 3 && (
             <div className="mb-4">
@@ -305,7 +342,8 @@ export default function DashboardPage() {
           {/* Run list */}
           <div className="space-y-3">
             {runs.filter(r =>
-              !search || r.run_name.toLowerCase().includes(search.toLowerCase()) || r.platform.toLowerCase().includes(search.toLowerCase())
+              (platformFilter === 'all' || r.platform === platformFilter) &&
+              (!search || r.run_name.toLowerCase().includes(search.toLowerCase()) || r.platform.toLowerCase().includes(search.toLowerCase()))
             ).map(run => (
               <div
                 key={run.id}

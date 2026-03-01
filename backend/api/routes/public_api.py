@@ -39,6 +39,28 @@ from utils.url_parser import parse_url
 router = APIRouter(prefix="/api/v1/pub", tags=["public-api"])
 
 
+@router.get("/stats")
+async def pub_stats():
+    """
+    Public — no auth required.
+    Returns aggregate platform-wide stats for the landing page live counter.
+    """
+    db = get_supabase_admin()
+    try:
+        runs_row = db.table("qa_runs").select("id", count="exact").execute()
+        checks_row = db.table("check_results").select("id", count="exact").execute()
+        total_runs = runs_row.count or 0
+        total_checks = checks_row.count or 0
+    except Exception:
+        total_runs, total_checks = 0, 0
+
+    return {
+        "total_runs": total_runs,
+        "total_checks_run": total_checks,
+        "checks_per_run_avg": round(total_checks / total_runs, 1) if total_runs else 0,
+    }
+
+
 def _require_paid(user_id: str, db) -> None:
     """Raise 403 if user is on the free plan."""
     row = db.table("profiles").select("plan_tier").eq("id", user_id).single().execute()
