@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { api } from '@/lib/api'
 import type { CreateRunPayload } from '@/lib/api'
 
@@ -143,6 +143,7 @@ export default function NewRunPage() {
   return (
     <div className="max-w-2xl mx-auto py-10 px-4">
       <div className="mb-8">
+        <Link to="/dashboard" className="text-sm text-blue-600 hover:underline mb-3 block">← Dashboard</Link>
         <h1 className="text-2xl font-bold text-slate-900">New QA Run</h1>
         <p className="text-slate-500 mt-1">Check your campaign before it goes live</p>
       </div>

@@ -13,6 +13,8 @@ interface RunRow {
   readiness_score: number | null
   passed_checks: number | null
   failed_checks: number | null
+  total_checks: number | null
+  warning_checks: number | null
   created_at: string
   completed_at: string | null
 }
@@ -335,6 +337,8 @@ export default function DashboardPage() {
                         <span className="ml-3">
                           <span className="text-green-600">{run.passed_checks} passed</span>
                           {run.failed_checks ? <span className="text-red-600 ml-2">{run.failed_checks} failed</span> : null}
+                          {run.warning_checks ? <span className="text-yellow-600 ml-2">{run.warning_checks} warned</span> : null}
+                          {run.total_checks ? <span className="text-slate-400 ml-2">/ {run.total_checks} checks</span> : null}
                         </span>
                       )}
                     </div>
