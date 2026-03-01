@@ -1,12 +1,14 @@
-// v2
+// v3
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import LoginPage from '@/pages/LoginPage'
+import LandingPage from '@/pages/LandingPage'
 import DashboardPage from '@/pages/DashboardPage'
 import NewRunPage from '@/pages/NewRunPage'
 import RunPage from '@/pages/RunPage'
 import ReportPage from '@/pages/ReportPage'
 import SharedReportPage from '@/pages/SharedReportPage'
+import SettingsPage from '@/pages/SettingsPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth()
@@ -22,26 +24,22 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
+  const { session } = useAuth()
   return (
     <Routes>
+      {/* Public */}
+      <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/reports/share/:token" element={<SharedReportPage />} />
 
-      <Route path="/dashboard" element={
-        <ProtectedRoute><DashboardPage /></ProtectedRoute>
-      } />
-      <Route path="/new" element={
-        <ProtectedRoute><NewRunPage /></ProtectedRoute>
-      } />
-      <Route path="/runs/:runId" element={
-        <ProtectedRoute><RunPage /></ProtectedRoute>
-      } />
-      <Route path="/runs/:runId/report" element={
-        <ProtectedRoute><ReportPage /></ProtectedRoute>
-      } />
+      {/* Protected */}
+      <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+      <Route path="/new"       element={<ProtectedRoute><NewRunPage /></ProtectedRoute>} />
+      <Route path="/settings"  element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+      <Route path="/runs/:runId"        element={<ProtectedRoute><RunPage /></ProtectedRoute>} />
+      <Route path="/runs/:runId/report" element={<ProtectedRoute><ReportPage /></ProtectedRoute>} />
 
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }

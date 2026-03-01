@@ -277,3 +277,17 @@ async def rerun(
     )
 
     return await create_run(rebuild, background_tasks, user)
+
+
+@router.delete("/{run_id}", status_code=204)
+async def delete_run(run_id: str, user: dict = Depends(get_current_user)):
+    """Hard-delete a run and its associated check_results and campaign_urls."""
+    db = get_supabase_admin()
+    # Verify ownership before deleting
+    existing = db.table("qa_runs").select("id").eq("id", run_id).eq("user_id", user["user_id"]).single().execute()
+    if not existing.data:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    db.table("check_results").delete().eq("run_id", run_id).execute()
+    db.table("campaign_urls").delete().eq("run_id", run_id).execute()
+    db.table("qa_runs").delete().eq("id", run_id).execute()

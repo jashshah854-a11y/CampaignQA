@@ -122,6 +122,15 @@ export const api = {
   rerun: (runId: string) =>
     apiFetch<CreateRunResponse>(`/api/v1/runs/${runId}/rerun`, { method: 'POST' }),
 
+  deleteRun: (runId: string) =>
+    apiFetch<void>(`/api/v1/runs/${runId}`, { method: 'DELETE' }),
+
+  getProfile: () =>
+    apiFetch<{ id: string; email: string; full_name: string | null; company_name: string | null; plan_tier: string; reports_used: number; reports_limit: number; created_at: string }>('/api/v1/profile'),
+
+  updateProfile: (data: { full_name?: string; company_name?: string }) =>
+    apiFetch<{ status: string }>('/api/v1/profile', { method: 'PATCH', body: JSON.stringify(data) }),
+
   createCheckoutSession: (plan: 'pro' | 'agency') =>
     apiFetch<{ checkout_url: string }>('/api/v1/stripe/create-checkout-session', {
       method: 'POST',

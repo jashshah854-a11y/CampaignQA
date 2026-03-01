@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import get_settings
 from db.supabase_client import get_supabase_admin
-from api.routes import runs, reports, checks, stripe_webhook
+from api.routes import runs, reports, checks, stripe_webhook, profile
 
 
 @asynccontextmanager
@@ -42,8 +42,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -52,6 +52,7 @@ app.include_router(runs.router)
 app.include_router(reports.router)
 app.include_router(checks.router)
 app.include_router(stripe_webhook.router)
+app.include_router(profile.router)
 
 
 @app.get("/health")

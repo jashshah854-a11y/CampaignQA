@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { ScoreGauge } from '@/components/ScoreGauge'
 import { useAuth } from '@/contexts/AuthContext'
@@ -25,27 +25,25 @@ const statusPill: Record<string, string> = {
 }
 
 const PLATFORM_EMOJI: Record<string, string> = {
-  meta: '📘',
-  google: '🔵',
-  tiktok: '🎵',
-  linkedin: '💼',
-  multi: '🌐',
-  universal: '🌐',
+  meta: '📘', google: '🔵', tiktok: '🎵', linkedin: '💼', multi: '🌐', universal: '🌐',
 }
 
-/** Mini sparkline — renders last N completed scores as an SVG polyline */
+const PLAN_BADGE: Record<string, string> = {
+  pro:    'bg-blue-100 text-blue-700',
+  agency: 'bg-indigo-100 text-indigo-700',
+}
+
+/** SVG sparkline for score trend */
 function ScoreTrend({ runs }: { runs: RunRow[] }) {
   const scored = runs
     .filter(r => r.status === 'completed' && r.readiness_score !== null)
-    .slice(0, 20)
-    .reverse()
+    .slice(0, 20).reverse()
 
   if (scored.length < 2) return null
 
   const scores = scored.map(r => r.readiness_score as number)
   const W = 120, H = 36, PAD = 4
-  const minS = Math.min(...scores)
-  const maxS = Math.max(...scores)
+  const minS = Math.min(...scores), maxS = Math.max(...scores)
   const range = maxS - minS || 1
 
   const pts = scores.map((s, i) => {
@@ -55,8 +53,7 @@ function ScoreTrend({ runs }: { runs: RunRow[] }) {
   })
 
   const latest = scores[scores.length - 1]
-  const prev   = scores[scores.length - 2]
-  const delta  = latest - prev
+  const delta  = latest - scores[scores.length - 2]
   const color  = delta >= 0 ? '#22c55e' : '#ef4444'
   const [lx, ly] = pts[pts.length - 1].split(',').map(Number)
 
@@ -69,14 +66,7 @@ function ScoreTrend({ runs }: { runs: RunRow[] }) {
         </p>
       </div>
       <svg width={W} height={H} className="flex-shrink-0">
-        <polyline
-          points={pts.join(' ')}
-          fill="none"
-          stroke={color}
-          strokeWidth="2"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
+        <polyline points={pts.join(' ')} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
         <circle cx={lx} cy={ly} r="3" fill={color} />
       </svg>
       <div className="text-right flex-shrink-0">
@@ -87,17 +77,80 @@ function ScoreTrend({ runs }: { runs: RunRow[] }) {
   )
 }
 
+/** Floating context menu for a run row */
+function RunMenu({ runId, onDelete }: { runId: string; onDelete: (id: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false)
+        setConfirming(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  return (
+    <div ref={ref} className="relative flex-shrink-0" onClick={e => e.preventDefault()}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="text-slate-300 hover:text-slate-500 px-1 text-lg leading-none"
+        aria-label="Run options"
+      >
+        ⋯
+      </button>
+      {open && (
+        <div className="absolute right-0 top-7 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-10 min-w-[140px]">
+          {!confirming ? (
+            <button
+              onClick={() => setConfirming(true)}
+              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+            >
+              Delete run
+            </button>
+          ) : (
+            <div className="px-4 py-2">
+              <p className="text-xs text-slate-600 mb-2">Delete this run?</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { onDelete(runId); setOpen(false) }}
+                  className="text-xs bg-red-600 text-white px-3 py-1 rounded-lg font-medium hover:bg-red-700"
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => { setConfirming(false); setOpen(false) }}
+                  className="text-xs text-slate-500 hover:text-slate-700"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function DashboardPage() {
   const { user, signOut } = useAuth()
+  const navigate = useNavigate()
   const [runs, setRuns] = useState<RunRow[]>([])
   const [loading, setLoading] = useState(true)
   const [upgradeLoading, setUpgradeLoading] = useState(false)
   const [upgradeError, setUpgradeError] = useState('')
+  const [planTier, setPlanTier] = useState<string>('free')
   const [searchParams] = useSearchParams()
   const justUpgraded = searchParams.get('upgraded') === '1'
 
   useEffect(() => {
     api.listRuns().then(data => setRuns(data as RunRow[])).finally(() => setLoading(false))
+    api.getProfile().then(p => setPlanTier(p.plan_tier)).catch(() => {})
   }, [])
 
   const handleUpgrade = async (plan: 'pro' | 'agency') => {
@@ -112,35 +165,48 @@ export default function DashboardPage() {
     }
   }
 
+  const handleDelete = async (runId: string) => {
+    try {
+      await api.deleteRun(runId)
+      setRuns(prev => prev.filter(r => r.id !== runId))
+    } catch {
+      // silent — run stays in list
+    }
+  }
+
+  const handleRowClick = (run: RunRow) => {
+    navigate(run.status === 'completed' ? `/runs/${run.id}/report` : `/runs/${run.id}`)
+  }
+
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
       {/* Nav */}
       <div className="flex items-center justify-between mb-8">
-        <div>
+        <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-slate-900">LaunchProof</h1>
-          <p className="text-slate-500 text-sm">{user?.email}</p>
+          {planTier !== 'free' && (
+            <span className={cn('text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize', PLAN_BADGE[planTier])}>
+              {planTier}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3">
+          <Link to="/settings" className="text-sm text-slate-500 hover:text-slate-700">Settings</Link>
           <Link
             to="/new"
             className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors"
           >
             + New QA Run
           </Link>
-          <button onClick={signOut} className="text-sm text-slate-500 hover:text-slate-700">
-            Sign out
-          </button>
+          <button onClick={signOut} className="text-sm text-slate-500 hover:text-slate-700">Sign out</button>
         </div>
       </div>
 
-      {/* Upgrade success */}
       {justUpgraded && (
         <div className="bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3 text-sm font-medium mb-5">
           You're now on a paid plan — thank you!
         </div>
       )}
-
-      {/* Upgrade error */}
       {upgradeError && (
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm mb-4">
           {upgradeError}
@@ -162,42 +228,43 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
-          {/* Score sparkline trend */}
           <ScoreTrend runs={runs} />
 
-          {/* Upgrade banner */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-5 text-white mb-5">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div>
-                <p className="font-semibold">Upgrade for client sharing &amp; team access</p>
-                <p className="text-blue-100 text-sm mt-0.5">Share QA reports with clients · Bulk CSV · Priority checks</p>
-              </div>
-              <div className="flex gap-2 flex-shrink-0">
-                <button
-                  onClick={() => handleUpgrade('pro')}
-                  disabled={upgradeLoading}
-                  className="bg-white text-blue-700 font-semibold text-sm px-4 py-2 rounded-lg hover:bg-blue-50 disabled:opacity-60 transition-colors"
-                >
-                  Pro — $29/mo
-                </button>
-                <button
-                  onClick={() => handleUpgrade('agency')}
-                  disabled={upgradeLoading}
-                  className="bg-blue-500 hover:bg-blue-400 disabled:opacity-60 text-white font-semibold text-sm px-4 py-2 rounded-lg transition-colors"
-                >
-                  Agency — $79/mo
-                </button>
+          {/* Upgrade banner — only shown to free users */}
+          {planTier === 'free' && (
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-5 text-white mb-5">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <p className="font-semibold">Upgrade for client sharing &amp; team access</p>
+                  <p className="text-blue-100 text-sm mt-0.5">Share QA reports with clients · Bulk CSV · Priority checks</p>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => handleUpgrade('pro')}
+                    disabled={upgradeLoading}
+                    className="bg-white text-blue-700 font-semibold text-sm px-4 py-2 rounded-lg hover:bg-blue-50 disabled:opacity-60 transition-colors"
+                  >
+                    Pro — $29/mo
+                  </button>
+                  <button
+                    onClick={() => handleUpgrade('agency')}
+                    disabled={upgradeLoading}
+                    className="bg-blue-500 hover:bg-blue-400 disabled:opacity-60 text-white font-semibold text-sm px-4 py-2 rounded-lg transition-colors"
+                  >
+                    Agency — $79/mo
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Run list */}
           <div className="space-y-3">
             {runs.map(run => (
-              <Link
+              <div
                 key={run.id}
-                to={run.status === 'completed' ? `/runs/${run.id}/report` : `/runs/${run.id}`}
-                className="block bg-white rounded-2xl border border-slate-200 p-5 hover:border-blue-300 hover:shadow-sm transition-all"
+                onClick={() => handleRowClick(run)}
+                className="block bg-white rounded-2xl border border-slate-200 p-5 hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer"
               >
                 <div className="flex items-center gap-5">
                   <div className="w-24 flex-shrink-0">
@@ -228,9 +295,9 @@ export default function DashboardPage() {
                       )}
                     </div>
                   </div>
-                  <div className="text-slate-300 flex-shrink-0">→</div>
+                  <RunMenu runId={run.id} onDelete={handleDelete} />
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </>
