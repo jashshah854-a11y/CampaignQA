@@ -31,10 +31,6 @@ from utils.url_parser import parse_url
 
 router = APIRouter(prefix="/api/v1/runs", tags=["runs"])
 
-def _increment_reports_used(user_id: str) -> None:
-    pass  # unlimited access — no usage tracking
-
-
 @router.post("", response_model=CreateRunResponse)
 async def create_run(
     payload: CreateRunRequest,
@@ -42,6 +38,20 @@ async def create_run(
     user: dict = Depends(get_current_user),
 ):
     user_id = user["user_id"]
+    db = get_supabase_admin()
+
+    # Enforce free-tier run limit
+    profile_row = db.table("profiles").select("plan_tier,reports_used,reports_limit").eq("id", user_id).single().execute()
+    if profile_row.data:
+        profile = profile_row.data
+        if profile.get("plan_tier", "free") == "free":
+            used = profile.get("reports_used", 0) or 0
+            limit = profile.get("reports_limit", 3) or 3
+            if used >= limit:
+                raise HTTPException(
+                    status_code=402,
+                    detail=f"Free plan limit reached ({used}/{limit} runs used). Upgrade to Pro for unlimited runs.",
+                )
 
     # Parse URLs
     parsed_urls = [parse_url(u) for u in payload.urls]
@@ -81,7 +91,6 @@ async def create_run(
         "campaign_objective": payload.campaign_objective,
         "started_at": datetime.now(timezone.utc).isoformat(),
     }
-    db = get_supabase_admin()
     run_result = db.table("qa_runs").insert(run_row).execute()
     run_id = run_result.data[0]["id"]
     ctx.run_id = run_id
@@ -116,8 +125,11 @@ async def create_run(
         "readiness_score": score_so_far,
     }).eq("id", run_id).execute()
 
-    # Increment usage counter
-    _increment_reports_used(user_id)
+    # Increment usage counter for free-tier tracking (safe no-op for paid users)
+    try:
+        db.rpc("increment_reports_used", {"uid": user_id}).execute()
+    except Exception:
+        pass  # non-blocking — don't fail the run if counter update fails
 
     # Dispatch Tier 2 in background
     background_tasks.add_task(run_tier2_background, run_id, user_id, ctx, tier1_results)

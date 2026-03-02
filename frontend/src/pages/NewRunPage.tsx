@@ -354,9 +354,30 @@ export default function NewRunPage() {
         </details>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
-            {error}
-          </div>
+          error.toLowerCase().includes('limit reached') || error.toLowerCase().includes('upgrade') ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
+              <p className="text-sm font-semibold text-amber-900 mb-1">Free plan limit reached</p>
+              <p className="text-xs text-amber-700 mb-3">{error}</p>
+              <div className="flex gap-2">
+                <Link
+                  to="/settings"
+                  className="text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
+                >
+                  Upgrade to Pro →
+                </Link>
+                <Link
+                  to="/dashboard"
+                  className="text-xs text-slate-600 hover:text-slate-800 font-medium px-4 py-2 rounded-lg transition-colors"
+                >
+                  Back to dashboard
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+              {error}
+            </div>
+          )
         )}
 
         <button
