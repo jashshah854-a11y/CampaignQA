@@ -139,6 +139,19 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
     }
   }
 
+  // Keyboard shortcuts: R = re-run, S = share (not on shared reports, not when typing)
+  useEffect(() => {
+    if (shared || loading) return
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || e.metaKey || e.ctrlKey) return
+      if (e.key === 'r' || e.key === 'R') handleRerun()
+      if (e.key === 's' || e.key === 'S') handleEnableShare()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [shared, loading, isPublic, report, runId, rerunning])
+
   const handleSaveNotes = async () => {
     if (!runId) return
     setNotesSaving(true)
@@ -305,6 +318,10 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
               </div>
             </div>
             {shareMsg && <p className="text-xs text-green-600">{shareMsg}</p>}
+            <p className="text-xs text-slate-300 print:hidden">
+              <kbd className="font-mono bg-slate-100 text-slate-500 px-1 rounded">R</kbd> re-run &nbsp;
+              <kbd className="font-mono bg-slate-100 text-slate-500 px-1 rounded">S</kbd> share
+            </p>
           </div>
         )}
       </div>

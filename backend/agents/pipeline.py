@@ -187,6 +187,12 @@ def run_tier2_background(run_id: str, user_id: str, ctx: RunContext, tier1_resul
         all_results = tier1_results + tier2_results
         score = update_run_summary(run_id, all_results, status="completed")
 
+        # Refresh benchmark materialized view so new data feeds into comparisons
+        try:
+            db.rpc("refresh_benchmark_view").execute()
+        except Exception:
+            pass  # view may not exist in early deployments
+
         # Fire-and-forget email notification
         run_row = db.table("qa_runs").select("run_name").eq("id", run_id).single().execute()
         run_name = (run_row.data or {}).get("run_name", "QA Run")
