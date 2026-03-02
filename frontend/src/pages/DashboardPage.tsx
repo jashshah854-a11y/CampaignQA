@@ -169,7 +169,7 @@ function RunMenu({
 }
 
 export default function DashboardPage() {
-  const { user, signOut } = useAuth()
+  const { signOut } = useAuth()
   const navigate = useNavigate()
   const [runs, setRuns] = useState<RunRow[]>([])
   const [loading, setLoading] = useState(true)

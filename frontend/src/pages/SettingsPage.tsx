@@ -10,6 +10,7 @@ interface Profile {
   full_name: string | null
   company_name: string | null
   slack_webhook_url: string | null
+  webhook_url: string | null
   plan_tier: string
   reports_used: number
   reports_limit: number
@@ -59,7 +60,7 @@ export default function SettingsPage() {
           full_name: p.full_name || '',
           company_name: p.company_name || '',
           slack_webhook_url: p.slack_webhook_url || '',
-          webhook_url: (p as unknown as { webhook_url?: string }).webhook_url || '',
+          webhook_url: p.webhook_url || '',
         })
         if (p.plan_tier !== 'free') {
           setKeysLoading(true)
