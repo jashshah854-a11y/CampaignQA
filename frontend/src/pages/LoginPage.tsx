@@ -11,11 +11,11 @@ export default function LoginPage() {
   const [step, setStep] = useState<'email' | 'otp'>('email')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [resendCountdown, setResendCountdown] = useState(0)
 
   if (session) return <Navigate to="/dashboard" replace />
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const sendOtp = async () => {
     setError('')
     setLoading(true)
     const { error: err } = await supabase.auth.signInWithOtp({
@@ -23,8 +23,21 @@ export default function LoginPage() {
       options: { shouldCreateUser: true },
     })
     setLoading(false)
-    if (err) setError(err.message)
-    else setStep('otp')
+    if (err) { setError(err.message); return false }
+    setResendCountdown(30)
+    return true
+  }
+
+  useEffect(() => {
+    if (resendCountdown <= 0) return
+    const t = setTimeout(() => setResendCountdown(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [resendCountdown])
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const ok = await sendOtp()
+    if (ok) setStep('otp')
   }
 
   const handleOtpSubmit = async (e: React.FormEvent) => {
@@ -92,7 +105,16 @@ export default function LoginPage() {
                 maxLength={6}
                 required
                 value={otp}
-                onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
+                onChange={e => {
+                  const val = e.target.value.replace(/\D/g, '')
+                  setOtp(val)
+                  if (val.length === 6) {
+                    // Auto-submit when 6 digits entered
+                    setTimeout(() => {
+                      (e.target.form as HTMLFormElement | null)?.requestSubmit()
+                    }, 80)
+                  }
+                }}
                 placeholder="000000"
                 className="w-full px-3 py-3 border border-slate-300 rounded-lg text-xl font-mono text-center tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-blue-500"
                 autoFocus
@@ -108,13 +130,23 @@ export default function LoginPage() {
                 {loading ? 'Verifying…' : 'Verify & sign in →'}
               </button>
 
-              <button
-                type="button"
-                onClick={() => { setStep('email'); setOtp(''); setError('') }}
-                className="w-full text-xs text-slate-400 hover:text-slate-600 transition-colors py-1"
-              >
-                ← Use a different email
-              </button>
+              <div className="flex items-center justify-between text-xs">
+                <button
+                  type="button"
+                  onClick={() => { setStep('email'); setOtp(''); setError('') }}
+                  className="text-slate-400 hover:text-slate-600 transition-colors py-1"
+                >
+                  ← Different email
+                </button>
+                <button
+                  type="button"
+                  disabled={resendCountdown > 0 || loading}
+                  onClick={sendOtp}
+                  className="text-blue-500 hover:text-blue-700 disabled:text-slate-300 disabled:cursor-not-allowed transition-colors py-1"
+                >
+                  {resendCountdown > 0 ? `Resend in ${resendCountdown}s` : 'Resend code'}
+                </button>
+              </div>
             </form>
           )}
         </div>

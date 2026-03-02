@@ -19,6 +19,10 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
     },
   })
   if (!res.ok) {
+    if (res.status === 401) {
+      // Session expired — redirect to login
+      window.location.href = '/login'
+    }
     const err = await res.json().catch(() => ({ detail: res.statusText }))
     throw new Error(err.detail || `API error ${res.status}`)
   }
