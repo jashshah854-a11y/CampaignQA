@@ -37,8 +37,8 @@ async def create_checkout_session(body: dict, user: dict = Depends(get_current_u
         client_reference_id=user["user_id"],
         customer_email=user.get("email"),
         metadata={"price_id": price_id},
-        success_url=success_url or f"{settings.cors_origins_list[0]}/dashboard?upgraded=1",
-        cancel_url=cancel_url or f"{settings.cors_origins_list[0]}/dashboard",
+        success_url=success_url or f"{settings.app_base_url.rstrip('/')}/dashboard?upgraded=1",
+        cancel_url=cancel_url or f"{settings.app_base_url.rstrip('/')}/dashboard",
     )
     return {"checkout_url": session.url}
 
