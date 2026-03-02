@@ -155,12 +155,33 @@ export default function NewRunPage() {
     }
   }
 
+  const fillSample = () => {
+    setForm(f => ({
+      ...f,
+      run_name: f.run_name || 'My First QA Run — Meta',
+      platform: 'meta',
+      urlsRaw: 'https://yoursite.com/landing?utm_source=facebook&utm_medium=paid_social&utm_campaign=bfcm_2025&utm_content=hero_image',
+    }))
+    setUrlMode('paste')
+  }
+
   return (
     <div className="max-w-2xl mx-auto py-10 px-4">
       <div className="mb-8">
         <Link to="/dashboard" className="text-sm text-blue-600 hover:underline mb-3 block">← Dashboard</Link>
-        <h1 className="text-2xl font-bold text-slate-900">New QA Run</h1>
-        <p className="text-slate-500 mt-1">Check your campaign before it goes live</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">New QA Run</h1>
+            <p className="text-slate-500 mt-1">Check your campaign before it goes live</p>
+          </div>
+          <button
+            type="button"
+            onClick={fillSample}
+            className="text-xs text-blue-600 hover:text-blue-800 font-medium border border-blue-200 bg-blue-50 hover:bg-blue-100 rounded-lg px-3 py-1.5 flex-shrink-0 transition-colors"
+          >
+            Try with sample URL →
+          </button>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
