@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /new
+Disallow: /runs/
+Disallow: /settings
+Disallow: /compare
+Disallow: /api-docs
+Disallow: /checks
+
+Sitemap: https://launchproof.io/sitemap.xml
