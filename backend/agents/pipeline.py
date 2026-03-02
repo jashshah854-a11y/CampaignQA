@@ -142,7 +142,12 @@ def _notify_user(user_id: str, run_id: str, run_name: str, score: float) -> None
 
         email = profile.get("email")
         if email:
-            send_run_complete_email(email, run_name, score, run_url)
+            send_run_complete_email(
+                email, run_name, score, run_url,
+                passed=run_data.get("passed_checks") or 0,
+                failed=run_data.get("failed_checks") or 0,
+                warnings=run_data.get("warning_checks") or 0,
+            )
 
         slack_webhook = profile.get("slack_webhook_url")
         if slack_webhook:

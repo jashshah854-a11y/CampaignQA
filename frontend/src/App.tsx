@@ -14,6 +14,7 @@ const SettingsPage       = lazy(() => import('@/pages/SettingsPage'))
 const ComparePage        = lazy(() => import('@/pages/ComparePage'))
 const ApiDocsPage        = lazy(() => import('@/pages/ApiDocsPage'))
 const ChecksCatalogPage  = lazy(() => import('@/pages/ChecksCatalogPage'))
+const DemoReportPage     = lazy(() => import('@/pages/DemoReportPage'))
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth()
@@ -51,6 +52,7 @@ function AppRoutes() {
         <Route path="/compare"   element={<ProtectedRoute><ComparePage /></ProtectedRoute>} />
         <Route path="/api-docs"  element={<ProtectedRoute><ApiDocsPage /></ProtectedRoute>} />
         <Route path="/checks"    element={<ChecksCatalogPage />} />
+        <Route path="/demo"      element={<DemoReportPage />} />
         <Route path="/runs/:runId"        element={<ProtectedRoute><RunPage /></ProtectedRoute>} />
         <Route path="/runs/:runId/report" element={<ProtectedRoute><ReportPage /></ProtectedRoute>} />
 

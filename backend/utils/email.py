@@ -7,7 +7,15 @@ import httpx
 from core.config import get_settings
 
 
-def send_run_complete_email(to_email: str, run_name: str, score: float, run_url: str) -> None:
+def send_run_complete_email(
+    to_email: str,
+    run_name: str,
+    score: float,
+    run_url: str,
+    passed: int = 0,
+    failed: int = 0,
+    warnings: int = 0,
+) -> None:
     """
     Send a run-complete notification email via Resend.
     Silently no-ops if RESEND_API_KEY is not set.
@@ -36,6 +44,21 @@ def send_run_complete_email(to_email: str, run_name: str, score: float, run_url:
       <div style="text-align:center;background:#f8fafc;border-radius:12px;padding:24px;margin-bottom:24px">
         <p style="color:{score_color};font-size:56px;font-weight:900;margin:0;line-height:1">{score_int}</p>
         <p style="color:{score_color};font-size:13px;font-weight:600;margin:6px 0 0">{label}</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px">
+        <div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center">
+          <p style="color:#16a34a;font-size:24px;font-weight:900;margin:0;line-height:1">{passed}</p>
+          <p style="color:#16a34a;font-size:11px;font-weight:600;margin:4px 0 0">Passed</p>
+        </div>
+        <div style="background:#fef2f2;border-radius:10px;padding:12px;text-align:center">
+          <p style="color:#dc2626;font-size:24px;font-weight:900;margin:0;line-height:1">{failed}</p>
+          <p style="color:#dc2626;font-size:11px;font-weight:600;margin:4px 0 0">Failed</p>
+        </div>
+        <div style="background:#fefce8;border-radius:10px;padding:12px;text-align:center">
+          <p style="color:#ca8a04;font-size:24px;font-weight:900;margin:0;line-height:1">{warnings}</p>
+          <p style="color:#ca8a04;font-size:11px;font-weight:600;margin:4px 0 0">Warnings</p>
+        </div>
       </div>
 
       <a href="{run_url}"

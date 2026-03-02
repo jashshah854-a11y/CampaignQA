@@ -150,7 +150,9 @@ export default function LandingPage() {
 
       {/* Score mockup */}
       <section className="bg-slate-50 py-12 px-6">
-        <div className="max-w-2xl mx-auto bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+        <div className="max-w-2xl mx-auto">
+        <p className="text-center text-xs text-slate-400 mb-3">Example report — Meta · Q4 BFCM Campaign</p>
+        <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
           <div className="flex items-center gap-6 mb-6">
             <div className="w-24 h-24 rounded-full border-8 border-green-500 flex items-center justify-center flex-shrink-0">
               <span className="text-3xl font-black text-green-600">87</span>
@@ -177,6 +179,12 @@ export default function LandingPage() {
           <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 text-sm text-red-700">
             ⚠ 2 critical issues must be fixed before launch — UTM campaign missing · Privacy policy not detected
           </div>
+        </div>
+        <div className="text-center mt-5">
+          <Link to="/demo" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+            View the full interactive example report →
+          </Link>
+        </div>
         </div>
       </section>
 
