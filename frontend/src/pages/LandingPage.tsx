@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 
+// Reset title on landing page (override any dashboard title set while logged in)
+const PAGE_TITLE = 'LaunchProof — Pre-launch QA for paid media'
+
 interface Stats { total_runs: number; total_checks_run: number; checks_per_run_avg: number }
 
 function useCountUp(target: number, active: boolean, duration = 1200): number {
@@ -93,6 +96,7 @@ const STEPS = [
 const PLATFORMS = ['Meta', 'Google', 'TikTok', 'LinkedIn', 'Multi-platform']
 
 export default function LandingPage() {
+  useEffect(() => { document.title = PAGE_TITLE }, [])
   return (
     <div className="min-h-screen bg-white">
       {/* Nav */}

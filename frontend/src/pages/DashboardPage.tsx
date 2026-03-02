@@ -191,6 +191,7 @@ function RunMenu({
 }
 
 export default function DashboardPage() {
+  useEffect(() => { document.title = 'Dashboard — LaunchProof' }, [])
   const { signOut } = useAuth()
   const navigate = useNavigate()
   const [runs, setRuns] = useState<RunRow[]>([])

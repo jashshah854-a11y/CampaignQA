@@ -39,6 +39,9 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
           : await api.getReport(runId!)
         setReport(data)
         setNotes(data.notes || '')
+        document.title = shared
+          ? `${data.run_name} — LaunchProof Report`
+          : `${data.run_name} — LaunchProof`
         // Fire benchmark fetch in parallel — ignore if fails (no data yet)
         if (!shared) {
           api.getBenchmark(data.platform).then(setBenchmark).catch(() => {})
