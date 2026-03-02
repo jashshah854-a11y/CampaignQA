@@ -330,6 +330,111 @@ class PlatformUtmMediumAlignmentCheck(BaseCheck):
         )
 
 
+class UtmIdGa4Check(BaseCheck):
+    """
+    Checks for utm_id parameter on Google platform campaigns using manual UTM tagging.
+
+    Google Analytics 4 uses utm_id to link manual UTM sessions to Google Ads campaigns
+    when auto-tagging (gclid) is disabled. Without utm_id, Google Ads cost data and
+    GA4 campaign data cannot be linked in the GA4 reporting UI.
+
+    Only flagged when: platform=google AND utm_source=google AND no gclid (auto-tag off).
+    """
+    check_id = "utm_id_ga4"
+    check_name = "utm_id Parameter for GA4 (Google)"
+    check_category = "utm"
+    platforms = ["google"]
+    severity = Severity.minor
+    tier = 1
+
+    def execute(self, ctx: RunContext) -> CheckResult:
+        if ctx.platform.value != "google":
+            return self._result(CheckStatus.skipped, "utm_id check only applies to Google platform")
+
+        missing_utm_id: list[str] = []
+        has_auto_tag: list[str] = []
+
+        for u in ctx.urls:
+            params = u.params
+            if "gclid" in params:
+                has_auto_tag.append(u.raw_url)
+                continue  # auto-tagging is active — utm_id not needed
+            if "utm_source" in params and "utm_id" not in params:
+                missing_utm_id.append(u.raw_url)
+
+        if has_auto_tag and not missing_utm_id:
+            return self._result(
+                CheckStatus.passed,
+                f"Auto-tagging (gclid) detected on {len(has_auto_tag)} URL(s) — utm_id not required",
+            )
+
+        if missing_utm_id:
+            return self._result(
+                CheckStatus.warning,
+                f"{len(missing_utm_id)} Google URL(s) using manual UTMs without utm_id — Google Ads ↔ GA4 data linking will fail",
+                recommendation=(
+                    "Add utm_id={{campaignid}} to your Google Ads URL template, or enable auto-tagging "
+                    "in Google Ads settings. Without utm_id, cost data from Google Ads cannot be linked "
+                    "to sessions in GA4 reporting."
+                ),
+                affected_items=missing_utm_id,
+            )
+
+        return self._result(CheckStatus.passed, "All Google URLs have utm_id or use auto-tagging")
+
+
+class ClickIdConflictCheck(BaseCheck):
+    """
+    Detects click ID parameters (gclid, fbclid, ttclid, li_fat_id) alongside manual UTMs.
+
+    Click IDs indicate platform auto-tagging is active. Using both auto-tagging AND manual
+    UTMs on the same URL is fine, but having gclid on a Meta/TikTok URL (or fbclid on
+    Google) signals that a URL was incorrectly copied from another platform's ad.
+    """
+    check_id = "click_id_conflict"
+    check_name = "Click ID Platform Conflict"
+    check_category = "utm"
+    platforms = ["universal"]
+    severity = Severity.major
+    tier = 1
+
+    _PLATFORM_CLICK_IDS: dict[str, str] = {
+        "gclid": "google",
+        "fbclid": "meta",
+        "ttclid": "tiktok",
+        "li_fat_id": "linkedin",
+        "msclkid": "microsoft",
+    }
+
+    def execute(self, ctx: RunContext) -> CheckResult:
+        platform = ctx.platform.value
+        conflicts: list[str] = []
+
+        for u in ctx.urls:
+            params = u.params
+            for click_id, click_platform in self._PLATFORM_CLICK_IDS.items():
+                if click_id in params and platform not in (click_platform, "multi", "universal"):
+                    conflicts.append(
+                        f"{u.raw_url} — contains {click_id} ({click_platform} click ID) in a {platform} campaign"
+                    )
+
+        if not conflicts:
+            return self._result(
+                CheckStatus.passed,
+                "No cross-platform click ID conflicts detected",
+            )
+
+        return self._result(
+            CheckStatus.failed,
+            f"{len(conflicts)} URL(s) contain a click ID from a different platform — likely a copy-paste error",
+            recommendation=(
+                "Remove or replace the mismatched click ID. Having another platform's click ID (e.g. fbclid "
+                "in a Google campaign) means this URL was copied from a different platform's ad and not updated."
+            ),
+            affected_items=conflicts,
+        )
+
+
 # Register all checks
 for cls in [
     UtmSourcePresentCheck,
@@ -342,5 +447,7 @@ for cls in [
     UtmCrossUrlConsistencyCheck,
     UtmContentTermBestPracticeCheck,
     PlatformUtmMediumAlignmentCheck,
+    UtmIdGa4Check,
+    ClickIdConflictCheck,
 ]:
     CheckRegistry.register(cls())

@@ -219,6 +219,30 @@ export default function DashboardPage() {
     }
   }
 
+  const handleExportCsv = () => {
+    const headers = ['Run Name', 'Platform', 'Status', 'Score', 'Passed', 'Failed', 'Warnings', 'Total Checks', 'Created', 'Completed']
+    const rows = runs.map(r => [
+      `"${r.run_name.replace(/"/g, '""')}"`,
+      r.platform,
+      r.status,
+      r.readiness_score !== null ? Math.round(r.readiness_score) : '',
+      r.passed_checks ?? '',
+      r.failed_checks ?? '',
+      r.warning_checks ?? '',
+      r.total_checks ?? '',
+      new Date(r.created_at).toISOString(),
+      r.completed_at ? new Date(r.completed_at).toISOString() : '',
+    ].join(','))
+    const csv = [headers.join(','), ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `launchproof-runs-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const handleRowClick = (run: RunRow) => {
     navigate(run.status === 'completed' ? `/runs/${run.id}/report` : `/runs/${run.id}`)
   }
@@ -274,6 +298,18 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
+          {/* Run count + CSV export */}
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs text-slate-400">{runs.length} run{runs.length !== 1 ? 's' : ''}</p>
+            <button
+              onClick={handleExportCsv}
+              className="text-xs text-slate-500 hover:text-slate-700 font-medium"
+              title="Download all runs as CSV"
+            >
+              Export CSV ↓
+            </button>
+          </div>
+
           <ScoreTrend runs={runs} />
 
           {/* Upgrade banner — only shown to free users */}
