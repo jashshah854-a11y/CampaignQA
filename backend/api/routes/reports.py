@@ -16,7 +16,9 @@ async def get_shared_report(token: str):
         raise HTTPException(status_code=404, detail="Report not found or not shared publicly")
 
     r = run.data
-    checks = db.table("check_results").select("*").eq("run_id", r["id"]).execute()
+    run_id = r["id"]
+    checks = db.table("check_results").select("*").eq("run_id", run_id).execute()
+    urls = db.table("campaign_urls").select("id,raw_url,ad_name,ad_set_name,campaign_name").eq("run_id", run_id).execute()
     check_rows = checks.data or []
 
     by_category: dict[str, dict[str, int]] = {}
@@ -61,6 +63,6 @@ async def get_shared_report(token: str):
             {"critical": 0, "major": 1, "minor": 2}[x["severity"]],
             {"failed": 0, "warning": 1, "error": 2, "passed": 3, "skipped": 4}[x["status"]],
         ))],
-        urls=[],
+        urls=urls.data or [],
         shareable_url=None,
     )
