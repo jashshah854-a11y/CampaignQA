@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useRunPoller } from '@/hooks/useRunPoller'
 import { api } from '@/lib/api'
@@ -23,6 +23,10 @@ export default function RunPage() {
   const { status, done } = useRunPoller(runId ?? null)
   const [phaseIdx, setPhaseIdx] = useState(0)
   const [retrying, setRetrying] = useState(false)
+  // Creeping progress while Tier 2 runs in background
+  const [extraProgress, setExtraProgress] = useState(0)
+  const extraRef = useRef(extraProgress)
+  extraRef.current = extraProgress
 
   // Cycle through phase messages every 2.5s for a sense of progress
   useEffect(() => {
@@ -31,6 +35,19 @@ export default function RunPage() {
     }, 2500)
     return () => clearInterval(timer)
   }, [])
+
+  // While "running", slowly creep progress from 60% toward 93%
+  useEffect(() => {
+    if (status?.status !== 'running') return
+    setExtraProgress(0)
+    const timer = setInterval(() => {
+      setExtraProgress(p => {
+        const remaining = 33 - p  // creep up to 33 extra points (60+33=93%)
+        return p + remaining * 0.04  // exponential ease-in: slows as it approaches limit
+      })
+    }, 800)
+    return () => clearInterval(timer)
+  }, [status?.status])
 
   useEffect(() => {
     if (done && status?.status === 'completed') {
@@ -49,7 +66,10 @@ export default function RunPage() {
     }
   }
 
-  const progress = status?.progress_pct ?? 0
+  const rawProgress = status?.progress_pct ?? 0
+  const progress = status?.status === 'running'
+    ? Math.round(60 + extraProgress)
+    : rawProgress
   const failed = status?.status === 'failed'
 
   return (

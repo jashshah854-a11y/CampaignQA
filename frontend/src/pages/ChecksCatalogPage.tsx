@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { cn } from '@/lib/utils'
 
 interface CheckSpec {
   id: string
@@ -74,9 +76,24 @@ const SEVERITY_COLORS: Record<string, string> = {
 const CATEGORIES = [...new Set(CHECKS.map(c => c.category))]
 
 export default function ChecksCatalogPage() {
+  useEffect(() => { document.title = 'Checks Catalog — LaunchProof' }, [])
+  const [search, setSearch] = useState('')
+  const [severityFilter, setSeverityFilter] = useState<string>('all')
+  const [tierFilter, setTierFilter] = useState<number | 'all'>('all')
+
+  const q = search.toLowerCase()
+  const filtered = CHECKS.filter(c => {
+    if (severityFilter !== 'all' && c.severity !== severityFilter) return false
+    if (tierFilter !== 'all' && c.tier !== tierFilter) return false
+    if (q && !c.name.toLowerCase().includes(q) && !c.description.toLowerCase().includes(q) && !c.category.toLowerCase().includes(q)) return false
+    return true
+  })
+
+  const visibleCategories = CATEGORIES.filter(cat => filtered.some(c => c.category === cat))
+
   return (
     <div className="max-w-4xl mx-auto py-10 px-4">
-      <div className="mb-8">
+      <div className="mb-6">
         <Link to="/dashboard" className="text-sm text-blue-600 hover:underline mb-3 block">← Dashboard</Link>
         <h1 className="text-2xl font-bold text-slate-900">Checks Catalog</h1>
         <p className="text-slate-500 mt-1 text-sm">
@@ -85,40 +102,88 @@ export default function ChecksCatalogPage() {
         </p>
       </div>
 
-      {CATEGORIES.map(cat => {
-        const catChecks = CHECKS.filter(c => c.category === cat)
-        return (
-          <div key={cat} className="mb-8">
-            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">{cat}</h2>
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              {catChecks.map((check, i) => (
-                <div
-                  key={check.id}
-                  className={`flex items-start gap-4 px-5 py-4 ${i < catChecks.length - 1 ? 'border-b border-slate-100' : ''}`}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <p className="text-sm font-medium text-slate-900">{check.name}</p>
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${SEVERITY_COLORS[check.severity]}`}>
-                        {check.severity}
-                      </span>
-                      <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
-                        Tier {check.tier}
-                      </span>
-                      {check.platforms.filter(p => p !== 'universal').length > 0 && (
-                        <span className="text-xs text-slate-400">
-                          {check.platforms.join(', ')}
-                        </span>
-                      )}
+      {/* Search + filters */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search checks…"
+          className="flex-1 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <div className="flex gap-2 flex-wrap">
+          {(['all', 'critical', 'major', 'minor'] as const).map(s => (
+            <button
+              key={s}
+              onClick={() => setSeverityFilter(s)}
+              className={cn(
+                'text-xs px-3 py-1.5 rounded-full font-medium transition-colors',
+                severityFilter === s ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+              )}
+            >
+              {s === 'all' ? 'All severity' : s.charAt(0).toUpperCase() + s.slice(1)}
+            </button>
+          ))}
+          <button
+            onClick={() => setTierFilter(tierFilter === 'all' ? 1 : tierFilter === 1 ? 2 : 'all')}
+            className={cn(
+              'text-xs px-3 py-1.5 rounded-full font-medium transition-colors',
+              tierFilter !== 'all' ? 'bg-slate-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+            )}
+          >
+            {tierFilter === 'all' ? 'All tiers' : `Tier ${tierFilter} only`}
+          </button>
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="text-center py-16 text-slate-400 text-sm">
+          No checks match your search.{' '}
+          <button onClick={() => { setSearch(''); setSeverityFilter('all'); setTierFilter('all') }} className="text-blue-600 hover:underline">Clear filters</button>
+        </div>
+      ) : (
+        <>
+          {search || severityFilter !== 'all' || tierFilter !== 'all' ? (
+            <p className="text-xs text-slate-400 mb-4">{filtered.length} of {CHECKS.length} checks</p>
+          ) : null}
+
+          {visibleCategories.map(cat => {
+            const catChecks = filtered.filter(c => c.category === cat)
+            return (
+              <div key={cat} className="mb-8">
+                <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
+                  {cat} <span className="text-slate-400 font-normal normal-case">({catChecks.length})</span>
+                </h2>
+                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                  {catChecks.map((check, i) => (
+                    <div
+                      key={check.id}
+                      className={`flex items-start gap-4 px-5 py-4 ${i < catChecks.length - 1 ? 'border-b border-slate-100' : ''}`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <p className="text-sm font-medium text-slate-900">{check.name}</p>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${SEVERITY_COLORS[check.severity]}`}>
+                            {check.severity}
+                          </span>
+                          <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+                            Tier {check.tier}
+                          </span>
+                          {check.platforms.filter(p => p !== 'universal').length > 0 && (
+                            <span className="text-xs text-slate-400">
+                              {check.platforms.join(', ')}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500">{check.description}</p>
+                      </div>
                     </div>
-                    <p className="text-xs text-slate-500">{check.description}</p>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
-        )
-      })}
+              </div>
+            )
+          })}
+        </>
+      )}
 
       <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 text-center">
         <p className="text-sm font-semibold text-blue-900 mb-1">All checks run automatically on every QA run</p>

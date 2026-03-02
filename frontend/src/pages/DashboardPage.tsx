@@ -199,6 +199,8 @@ export default function DashboardPage() {
   const [upgradeLoading, setUpgradeLoading] = useState(false)
   const [upgradeError, setUpgradeError] = useState('')
   const [planTier, setPlanTier] = useState<string>('free')
+  const [reportsUsed, setReportsUsed] = useState<number | null>(null)
+  const [reportsLimit, setReportsLimit] = useState<number | null>(null)
   const [search, setSearch] = useState('')
   const [platformFilter, setPlatformFilter] = useState<string>('all')
   const [searchParams] = useSearchParams()
@@ -206,7 +208,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     api.listRuns().then(data => setRuns(data as RunRow[])).finally(() => setLoading(false))
-    api.getProfile().then(p => setPlanTier(p.plan_tier)).catch(() => {})
+    api.getProfile().then(p => {
+      setPlanTier(p.plan_tier)
+      setReportsUsed(p.reports_used)
+      setReportsLimit(p.reports_limit)
+    }).catch(() => {})
   }, [])
 
   // 'N' shortcut → new run (only when not focused on an input)
@@ -342,7 +348,12 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
                   <p className="font-semibold">Upgrade for client sharing &amp; team access</p>
-                  <p className="text-blue-100 text-sm mt-0.5">Share QA reports with clients · Bulk CSV · Priority checks</p>
+                  <p className="text-blue-100 text-sm mt-0.5">
+                    Share QA reports with clients · Bulk CSV · Priority checks
+                    {reportsUsed !== null && reportsLimit !== null && (
+                      <span className="ml-2 text-blue-200">· {reportsUsed}/{reportsLimit} free runs used</span>
+                    )}
+                  </p>
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
                   <button

@@ -234,7 +234,7 @@ async def get_run_report(run_id: str, user: dict = Depends(get_current_user)):
 async def list_runs(user: dict = Depends(get_current_user)):
     db = get_supabase_admin()
     result = db.table("qa_runs").select(
-        "id,run_name,platform,status,readiness_score,total_checks,passed_checks,failed_checks,created_at,completed_at"
+        "id,run_name,platform,status,readiness_score,total_checks,passed_checks,failed_checks,warning_checks,created_at,completed_at"
     ).eq("user_id", user["user_id"]).order("created_at", desc=True).limit(50).execute()
     return result.data or []
 

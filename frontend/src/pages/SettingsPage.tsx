@@ -32,6 +32,7 @@ const PLAN_LABELS: Record<string, { label: string; color: string }> = {
 }
 
 export default function SettingsPage() {
+  useEffect(() => { document.title = 'Settings — LaunchProof' }, [])
   const { user, signOut } = useAuth()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)

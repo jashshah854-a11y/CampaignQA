@@ -236,7 +236,18 @@ export default function NewRunPage() {
                 placeholder={"https://yoursite.com/landing?utm_source=facebook&utm_medium=cpc&utm_campaign=bfcm\nhttps://yoursite.com/product?utm_source=instagram&utm_medium=paid_social&utm_campaign=bfcm"}
                 className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <p className="text-xs text-slate-400 mt-1">One URL per line, up to 50</p>
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-xs text-slate-400">One URL per line, up to 50</p>
+                {(() => {
+                  const count = form.urlsRaw.split('\n').map(l => l.trim()).filter(Boolean).length
+                  if (count === 0) return null
+                  return (
+                    <p className={`text-xs font-medium ${count > 50 ? 'text-red-600' : 'text-slate-500'}`}>
+                      {count} URL{count !== 1 ? 's' : ''}{count > 50 ? ' — max 50' : ''}
+                    </p>
+                  )
+                })()}
+              </div>
             </>
           ) : (
             <div>
