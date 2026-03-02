@@ -246,7 +246,7 @@ async def get_run_report(run_id: str, user: dict = Depends(get_current_user)):
 async def list_runs(user: dict = Depends(get_current_user)):
     db = get_supabase_admin()
     result = db.table("qa_runs").select(
-        "id,run_name,platform,status,readiness_score,total_checks,passed_checks,failed_checks,warning_checks,created_at,completed_at,share_token,is_public"
+        "id,run_name,platform,status,readiness_score,total_checks,passed_checks,failed_checks,warning_checks,created_at,completed_at,share_token,is_public,schedule_interval,next_run_at"
     ).eq("user_id", user["user_id"]).order("created_at", desc=True).limit(50).execute()
     return result.data or []
 
@@ -308,8 +308,24 @@ async def delete_run(run_id: str, user: dict = Depends(get_current_user)):
 
 @router.patch("/{run_id}")
 async def update_run(run_id: str, body: dict, user: dict = Depends(get_current_user)):
-    """Update mutable run fields. Currently supports: notes (string)."""
-    allowed = {k: v for k, v in body.items() if k in ("notes",)}
+    """Update mutable run fields: notes, schedule_interval (daily/weekly/monthly/null)."""
+    VALID_INTERVALS = {"daily", "weekly", "monthly", None}
+    allowed: dict = {}
+    if "notes" in body:
+        allowed["notes"] = body["notes"]
+    if "schedule_interval" in body:
+        interval = body["schedule_interval"]
+        if interval not in VALID_INTERVALS:
+            raise HTTPException(status_code=400, detail="schedule_interval must be daily, weekly, monthly, or null")
+        allowed["schedule_interval"] = interval
+        # Set or clear next_run_at based on interval
+        if interval:
+            from datetime import datetime, timezone, timedelta
+            _DELTAS = {"daily": timedelta(days=1), "weekly": timedelta(weeks=1), "monthly": timedelta(days=30)}
+            allowed["next_run_at"] = (datetime.now(timezone.utc) + _DELTAS[interval]).isoformat()
+        else:
+            allowed["next_run_at"] = None
+
     if not allowed:
         raise HTTPException(status_code=400, detail="No updatable fields provided")
 

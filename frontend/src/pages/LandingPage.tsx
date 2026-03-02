@@ -338,6 +338,8 @@ export default function LandingPage() {
             <Link to="/demo" className="hover:text-slate-600">Example report</Link>
             <a href="#pricing" className="hover:text-slate-600">Pricing</a>
             <a href="mailto:jashshah854@gmail.com" className="hover:text-slate-600">Contact</a>
+            <Link to="/terms" className="hover:text-slate-600">Terms</Link>
+            <Link to="/privacy" className="hover:text-slate-600">Privacy</Link>
           </div>
           <span className="text-xs text-slate-400">Pre-launch QA for paid media</span>
         </div>

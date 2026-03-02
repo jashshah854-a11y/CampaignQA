@@ -19,6 +19,18 @@ async def get_shared_report(token: str):
     run_id = r["id"]
     checks = db.table("check_results").select("*").eq("run_id", run_id).execute()
     urls = db.table("campaign_urls").select("id,raw_url,ad_name,ad_set_name,campaign_name").eq("run_id", run_id).execute()
+
+    # Fetch owner branding for white-label (Agency only)
+    owner_row = db.table("profiles").select(
+        "company_name,logo_url,plan_tier"
+    ).eq("id", r["user_id"]).single().execute()
+    owner = owner_row.data or {}
+    branding = None
+    if owner.get("plan_tier") == "agency" and (owner.get("company_name") or owner.get("logo_url")):
+        branding = {
+            "company_name": owner.get("company_name"),
+            "logo_url": owner.get("logo_url"),
+        }
     check_rows = checks.data or []
 
     by_category: dict[str, dict[str, int]] = {}
@@ -65,4 +77,4 @@ async def get_shared_report(token: str):
         ))],
         urls=urls.data or [],
         shareable_url=None,
-    )
+    ).dict() | {"branding": branding}

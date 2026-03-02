@@ -19,6 +19,7 @@ interface RunRow {
   completed_at: string | null
   share_token: string | null
   is_public: boolean
+  schedule_interval: string | null
 }
 
 const statusPill: Record<string, string> = {
@@ -538,6 +539,11 @@ export default function DashboardPage() {
                       <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0', statusPill[run.status] || statusPill.pending)}>
                         {run.status}
                       </span>
+                      {run.schedule_interval && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 bg-purple-100 text-purple-700" title={`Auto re-runs ${run.schedule_interval}`}>
+                          ⏰ {run.schedule_interval}
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-slate-500">
                       {run.completed_at

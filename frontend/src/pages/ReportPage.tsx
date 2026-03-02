@@ -32,6 +32,7 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
   const [notes, setNotes] = useState('')
   const [notesSaving, setNotesSaving] = useState(false)
   const [notesSaved, setNotesSaved] = useState(false)
+  const [scheduleInterval, setScheduleInterval] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -42,6 +43,7 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
         setReport(data)
         setNotes(data.notes || '')
         setIsPublic(data.is_public ?? false)
+        setScheduleInterval(data.schedule_interval ?? null)
         document.title = shared
           ? `${data.run_name} — LaunchProof Report`
           : `${data.run_name} — LaunchProof`
@@ -219,10 +221,26 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
       {/* Shared report header branding */}
       {shared && (
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-800 text-sm">LaunchProof</span>
-            <span className="text-xs text-slate-400">Pre-launch QA for paid media</span>
-          </div>
+          {report.branding ? (
+            <div className="flex items-center gap-3">
+              {report.branding.logo_url && (
+                <img
+                  src={report.branding.logo_url}
+                  alt={report.branding.company_name || 'Company logo'}
+                  className="h-8 w-auto object-contain"
+                  onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                />
+              )}
+              {report.branding.company_name && (
+                <span className="font-bold text-slate-800 text-sm">{report.branding.company_name}</span>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-slate-800 text-sm">LaunchProof</span>
+              <span className="text-xs text-slate-400">Pre-launch QA for paid media</span>
+            </div>
+          )}
           <Link
             to="/login"
             className="text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors"
@@ -260,6 +278,21 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
               >
                 {rerunning ? 'Starting…' : 'Re-run'}
               </button>
+              <select
+                value={scheduleInterval ?? ''}
+                onChange={async e => {
+                  const val = e.target.value || null
+                  setScheduleInterval(val)
+                  try { await api.updateRun(runId!, { schedule_interval: val }) } catch { /* silent */ }
+                }}
+                className="text-sm border border-slate-200 rounded-lg px-3 py-2 text-slate-600 bg-white cursor-pointer"
+                title="Schedule automatic re-runs"
+              >
+                <option value="">No schedule</option>
+                <option value="daily">Daily re-run</option>
+                <option value="weekly">Weekly re-run</option>
+                <option value="monthly">Monthly re-run</option>
+              </select>
               <button
                 onClick={handleDownloadChecklist}
                 className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2 rounded-lg transition-colors"

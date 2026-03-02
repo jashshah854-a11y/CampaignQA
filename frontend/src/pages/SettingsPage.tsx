@@ -9,6 +9,7 @@ interface Profile {
   email: string
   full_name: string | null
   company_name: string | null
+  logo_url: string | null
   slack_webhook_url: string | null
   webhook_url: string | null
   plan_tier: string
@@ -42,7 +43,7 @@ export default function SettingsPage() {
   const [saveMsg, setSaveMsg] = useState('')
   const [error, setError] = useState('')
 
-  const [form, setForm] = useState({ full_name: '', company_name: '', slack_webhook_url: '', webhook_url: '' })
+  const [form, setForm] = useState({ full_name: '', company_name: '', logo_url: '', slack_webhook_url: '', webhook_url: '' })
 
   // API Keys state
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([])
@@ -61,6 +62,7 @@ export default function SettingsPage() {
         setForm({
           full_name: p.full_name || '',
           company_name: p.company_name || '',
+          logo_url: p.logo_url || '',
           slack_webhook_url: p.slack_webhook_url || '',
           webhook_url: p.webhook_url || '',
         })
@@ -254,6 +256,29 @@ export default function SettingsPage() {
               placeholder="Your company"
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          {/* Logo URL — Agency only, shown on white-label shared reports */}
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1">
+              Report Logo URL
+              {plan !== 'agency' && <span className="ml-2 text-slate-400">(Agency only)</span>}
+            </label>
+            <input
+              value={form.logo_url}
+              onChange={e => setForm(f => ({ ...f, logo_url: e.target.value }))}
+              placeholder="https://yourcompany.com/logo.png"
+              disabled={plan !== 'agency'}
+              className={cn(
+                'w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
+                plan === 'agency' ? 'border-slate-300' : 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed',
+              )}
+            />
+            {plan === 'agency' && (
+              <p className="text-xs text-slate-400 mt-1">
+                Your logo will replace "LaunchProof" on shared report links you send to clients.
+              </p>
+            )}
           </div>
 
           {/* Slack webhook — visible to all, but only actionable for paid users */}

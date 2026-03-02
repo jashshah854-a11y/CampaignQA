@@ -215,6 +215,13 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS webhook_url text;
 -- Stripe customer ID — stored on first successful checkout for billing portal access
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS stripe_customer_id text;
 
+-- White-label: Agency users can set a logo URL for branded shared reports
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS logo_url text;
+
+-- Scheduled re-runs: interval and next trigger time
+ALTER TABLE qa_runs ADD COLUMN IF NOT EXISTS schedule_interval text CHECK (schedule_interval IN ('daily', 'weekly', 'monthly'));
+ALTER TABLE qa_runs ADD COLUMN IF NOT EXISTS next_run_at timestamptz;
+
 -- Helper RPC to refresh benchmark materialized view (called from server startup)
 -- Run this migration ONCE in Supabase SQL Editor
 CREATE OR REPLACE FUNCTION refresh_benchmark_view()

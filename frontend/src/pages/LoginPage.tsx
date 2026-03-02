@@ -153,9 +153,9 @@ export default function LoginPage() {
 
         <p className="text-center text-xs text-slate-400 mt-6">
           By signing in you agree to our{' '}
-          <a href="mailto:jashshah854@gmail.com" className="underline hover:text-slate-600">terms</a>
+          <a href="/terms" className="underline hover:text-slate-600">terms</a>
           {' '}and{' '}
-          <a href="mailto:jashshah854@gmail.com" className="underline hover:text-slate-600">privacy policy</a>.
+          <a href="/privacy" className="underline hover:text-slate-600">privacy policy</a>.
         </p>
       </div>
     </div>

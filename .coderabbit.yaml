@@ -1,0 +1,77 @@
+# CodeRabbit configuration for CampaignQA (Paid Media Pre-Launch QA Tool)
+# Stack: React 18 + TypeScript + Vite + Tailwind (frontend), Python 3.11 + FastAPI (backend)
+# SaaS product — correctness of QA checks is core business value
+
+language: "en-US"
+
+tone_instructions: >
+  This is a paid SaaS product where incorrect QA results = customer churn.
+  Be very strict. Every QA check function must be scrutinized for false
+  positives/negatives. Flag any scoring formula changes without tests.
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: true
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  sequence_diagrams: true
+  auto_review:
+    enabled: true
+    ignore_title_keywords:
+      - "WIP"
+      - "draft"
+    drafts: false
+    base_branches:
+      - "main"
+
+  path_instructions:
+    - path: "backend/agents/pipeline.py"
+      instructions: >
+        This is the core QA executor — highest criticality file.
+        Review for:
+        - All 22 checks have proper error isolation (one check failure
+          should not abort the whole run)
+        - Tier 2 async checks don't block Tier 1 sync results
+        - Weighted scoring formula matches the spec (check severity weights)
+        - No hardcoded API credentials or tokens
+
+    - path: "backend/supabase_schema.sql"
+      instructions: >
+        Run data schema. Verify:
+        - `runs` table has proper indexes for querying by user
+        - Free tier limits (3 runs) enforced at DB level (not just API)
+        - No RLS policies missing on user-scoped tables
+
+    - path: "backend/**/*.py"
+      instructions: >
+        Enforce: type hints everywhere, no bare except, proper HTTP
+        status codes on all FastAPI error responses, Stripe webhook
+        signature verification on any payment endpoints.
+
+    - path: "src/components/**"
+      instructions: >
+        Focus on: proper loading states during async QA runs,
+        error boundaries around check result displays,
+        correct score visualization matching the weighted formula.
+
+    - path: "**/*stripe* | **/*webhook*"
+      instructions: >
+        CRITICAL: Verify Stripe webhook signature is validated before
+        processing any payment events. Flag any endpoint that trusts
+        Stripe payload data without signature verification.
+
+  abort_on_close: true
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: "local"
+  issues:
+    scope: "local"
+  pull_requests:
+    scope: "local"

@@ -97,6 +97,8 @@ export interface RunReport {
   shareable_url?: string
   notes?: string
   is_public?: boolean
+  schedule_interval?: string | null
+  branding?: { company_name?: string; logo_url?: string } | null
 }
 
 export interface CreateRunResponse {
@@ -137,13 +139,13 @@ export const api = {
   deleteRun: (runId: string) =>
     apiFetch<void>(`/api/v1/runs/${runId}`, { method: 'DELETE' }),
 
-  updateRun: (runId: string, data: { notes?: string }) =>
+  updateRun: (runId: string, data: { notes?: string; schedule_interval?: string | null }) =>
     apiFetch<{ status: string }>(`/api/v1/runs/${runId}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   getProfile: () =>
-    apiFetch<{ id: string; email: string; full_name: string | null; company_name: string | null; slack_webhook_url: string | null; webhook_url: string | null; plan_tier: string; reports_used: number; reports_limit: number; created_at: string }>('/api/v1/profile'),
+    apiFetch<{ id: string; email: string; full_name: string | null; company_name: string | null; logo_url: string | null; slack_webhook_url: string | null; webhook_url: string | null; plan_tier: string; reports_used: number; reports_limit: number; created_at: string }>('/api/v1/profile'),
 
-  updateProfile: (data: { full_name?: string; company_name?: string; slack_webhook_url?: string; webhook_url?: string }) =>
+  updateProfile: (data: { full_name?: string; company_name?: string; logo_url?: string; slack_webhook_url?: string; webhook_url?: string }) =>
     apiFetch<{ status: string }>('/api/v1/profile', { method: 'PATCH', body: JSON.stringify(data) }),
 
   testWebhook: () =>
