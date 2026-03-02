@@ -195,6 +195,22 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
+      {/* Shared report header branding */}
+      {shared && (
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-slate-800 text-sm">LaunchProof</span>
+            <span className="text-xs text-slate-400">Pre-launch QA for paid media</span>
+          </div>
+          <Link
+            to="/login"
+            className="text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors"
+          >
+            Try free →
+          </Link>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between mb-8 gap-4">
         <div>

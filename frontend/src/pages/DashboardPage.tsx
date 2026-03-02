@@ -229,8 +229,17 @@ export default function DashboardPage() {
   const [reportsLimit, setReportsLimit] = useState<number | null>(null)
   const [search, setSearch] = useState('')
   const [platformFilter, setPlatformFilter] = useState<string>('all')
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const justUpgraded = searchParams.get('upgraded') === '1'
+
+  // Clean the ?upgraded=1 param from URL after a short delay so it doesn't persist on refresh
+  useEffect(() => {
+    if (!justUpgraded) return
+    const t = setTimeout(() => {
+      setSearchParams(p => { p.delete('upgraded'); return p }, { replace: true })
+    }, 4000)
+    return () => clearTimeout(t)
+  }, [justUpgraded, setSearchParams])
 
   useEffect(() => {
     api.listRuns().then(data => setRuns(data as RunRow[])).finally(() => setLoading(false))
@@ -316,6 +325,9 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-3">
           <Link to="/checks" className="text-sm text-slate-500 hover:text-slate-700">Checks</Link>
+          {planTier !== 'free' && (
+            <Link to="/api-docs" className="text-sm text-slate-500 hover:text-slate-700">API</Link>
+          )}
           <Link to="/settings" className="text-sm text-slate-500 hover:text-slate-700">Settings</Link>
           <Link
             to="/new"
@@ -328,11 +340,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {justUpgraded && (
-        <div className="bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3 text-sm font-medium mb-5">
-          You're now on a paid plan — thank you!
-        </div>
-      )}
       {upgradeError && (
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm mb-4">
           {upgradeError}
@@ -342,7 +349,17 @@ export default function DashboardPage() {
       {loading ? (
         <div className="text-center py-16 text-slate-400">Loading your runs...</div>
       ) : runs.length === 0 ? (
-        <div className="text-center py-20">
+        <div>
+          {justUpgraded && (
+            <div className="bg-green-50 border border-green-200 rounded-2xl px-5 py-4 mb-6 flex items-center gap-3">
+              <span className="text-2xl">🎉</span>
+              <div>
+                <p className="text-sm font-semibold text-green-800">You're all set! Welcome to LaunchProof Pro.</p>
+                <p className="text-xs text-green-600 mt-0.5">Unlimited runs, client-shareable reports, and API access are now active.</p>
+              </div>
+            </div>
+          )}
+          <div className="text-center py-20">
           <div className="text-5xl mb-4">🎯</div>
           <h2 className="text-xl font-bold text-slate-900 mb-2">No QA runs yet</h2>
           <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto">
@@ -351,6 +368,7 @@ export default function DashboardPage() {
           <Link to="/new" className="inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-3 rounded-lg transition-colors">
             Run your first QA check →
           </Link>
+          </div>
         </div>
       ) : (
         <>
@@ -365,6 +383,17 @@ export default function DashboardPage() {
               Export CSV ↓
             </button>
           </div>
+
+          {/* Post-checkout success banner */}
+          {justUpgraded && (
+            <div className="bg-green-50 border border-green-200 rounded-2xl px-5 py-4 mb-4 flex items-center gap-3">
+              <span className="text-2xl">🎉</span>
+              <div>
+                <p className="text-sm font-semibold text-green-800">You're all set! Welcome to LaunchProof Pro.</p>
+                <p className="text-xs text-green-600 mt-0.5">Unlimited runs, client-shareable reports, and API access are now active.</p>
+              </div>
+            </div>
+          )}
 
           <ScoreTrend runs={runs} />
 
