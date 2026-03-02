@@ -48,6 +48,8 @@ export default function SettingsPage() {
   const [createdKey, setCreatedKey] = useState<{ key: string; name: string } | null>(null)
   const [keyCopied, setKeyCopied] = useState(false)
   const [creatingKey, setCreatingKey] = useState(false)
+  const [webhookTesting, setWebhookTesting] = useState(false)
+  const [webhookTestMsg, setWebhookTestMsg] = useState('')
 
   useEffect(() => {
     api.getProfile()
@@ -270,9 +272,38 @@ export default function SettingsPage() {
               )}
             />
             {isPaid && (
-              <p className="text-xs text-slate-400 mt-1">
-                POST a JSON payload to any URL when a run completes. Compatible with n8n, Zapier, Make, and custom endpoints.
-              </p>
+              <div className="flex items-center gap-3 mt-1">
+                <p className="text-xs text-slate-400 flex-1">
+                  POST a JSON payload to any URL when a run completes. Compatible with n8n, Zapier, Make, and custom endpoints.
+                </p>
+                {form.webhook_url && (
+                  <button
+                    type="button"
+                    disabled={webhookTesting}
+                    onClick={async () => {
+                      setWebhookTesting(true)
+                      setWebhookTestMsg('')
+                      try {
+                        await api.testWebhook()
+                        setWebhookTestMsg('Test sent!')
+                      } catch {
+                        setWebhookTestMsg('Failed — check URL')
+                      } finally {
+                        setWebhookTesting(false)
+                        setTimeout(() => setWebhookTestMsg(''), 4000)
+                      }
+                    }}
+                    className="text-xs text-blue-600 hover:text-blue-800 font-medium flex-shrink-0 disabled:opacity-50"
+                  >
+                    {webhookTesting ? 'Sending…' : 'Send test →'}
+                  </button>
+                )}
+                {webhookTestMsg && (
+                  <span className={`text-xs font-medium ${webhookTestMsg.includes('Failed') ? 'text-red-600' : 'text-green-600'}`}>
+                    {webhookTestMsg}
+                  </span>
+                )}
+              </div>
             )}
           </div>
 

@@ -135,6 +135,9 @@ export const api = {
   updateProfile: (data: { full_name?: string; company_name?: string; slack_webhook_url?: string; webhook_url?: string }) =>
     apiFetch<{ status: string }>('/api/v1/profile', { method: 'PATCH', body: JSON.stringify(data) }),
 
+  testWebhook: () =>
+    apiFetch<{ status: string; webhook_url: string }>('/api/v1/profile/webhook/test', { method: 'POST' }),
+
   createCheckoutSession: (plan: 'pro' | 'agency') =>
     apiFetch<{ checkout_url: string }>('/api/v1/stripe/create-checkout-session', {
       method: 'POST',

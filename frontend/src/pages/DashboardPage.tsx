@@ -260,6 +260,7 @@ export default function DashboardPage() {
           )}
         </div>
         <div className="flex items-center gap-3">
+          <Link to="/checks" className="text-sm text-slate-500 hover:text-slate-700">Checks</Link>
           <Link to="/settings" className="text-sm text-slate-500 hover:text-slate-700">Settings</Link>
           <Link
             to="/new"
