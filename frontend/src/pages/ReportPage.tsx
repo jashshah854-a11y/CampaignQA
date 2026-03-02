@@ -125,14 +125,19 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
   const handleEnableShare = async () => {
     if (!report || !runId) return
     try {
+      let shareUrl = report.shareable_url
       if (!isPublic) {
-        await api.toggleShare(runId, true)
+        const res = await api.toggleShare(runId, true)
         setIsPublic(true)
+        shareUrl = res.shareable_url ?? report.shareable_url
       }
-      if (report.shareable_url) {
-        await navigator.clipboard.writeText(report.shareable_url)
+      if (shareUrl) {
+        await navigator.clipboard.writeText(shareUrl)
         setShareMsg('Link copied!')
         setTimeout(() => setShareMsg(''), 3000)
+      } else {
+        setShareMsg('Sharing enabled — reload to copy link')
+        setTimeout(() => setShareMsg(''), 4000)
       }
     } catch {
       setShareMsg('Could not enable sharing')
@@ -145,7 +150,7 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement).tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || e.metaKey || e.ctrlKey) return
-      if (e.key === 'r' || e.key === 'R') handleRerun()
+      if ((e.key === 'r' || e.key === 'R') && !rerunning) handleRerun()
       if (e.key === 's' || e.key === 'S') handleEnableShare()
     }
     window.addEventListener('keydown', handler)

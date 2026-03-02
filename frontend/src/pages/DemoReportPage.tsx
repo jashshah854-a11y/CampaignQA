@@ -117,12 +117,12 @@ const DEMO_CHECKS: CheckResult[] = [
   { check_id: 'gtm_present', check_name: 'Google Tag Manager Present', check_category: 'tracking', platform: 'meta', status: 'passed', severity: 'major', message: 'GTM container detected on the landing page.', affected_items: [], execution_ms: 1243 },
 ]
 
-const DEMO_BY_CATEGORY: Record<string, Record<string, number>> = {
-  utm:      { passed: 9, failed: 0, warning: 1, error: 0, skipped: 0 },
-  url:      { passed: 10, failed: 0, warning: 2, error: 0, skipped: 0 },
-  creative: { passed: 3, failed: 0, warning: 0, error: 0, skipped: 0 },
-  tracking: { passed: 1, failed: 2, warning: 1, error: 0, skipped: 0 },
-}
+// Derived at module load — stays in sync with DEMO_CHECKS automatically
+const DEMO_BY_CATEGORY = DEMO_CHECKS.reduce<Record<string, Record<string, number>>>((acc, c) => {
+  if (!acc[c.check_category]) acc[c.check_category] = { passed: 0, failed: 0, warning: 0, error: 0, skipped: 0 }
+  acc[c.check_category][c.status] = (acc[c.check_category][c.status] ?? 0) + 1
+  return acc
+}, {})
 
 const DEMO_URLS = [
   {

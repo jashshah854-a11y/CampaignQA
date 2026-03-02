@@ -4,6 +4,7 @@ Also: enable/disable sharing for a run.
 """
 from fastapi import APIRouter, Depends, HTTPException
 from agents.checks.base import CheckRegistry
+from core.config import get_settings
 from db.supabase_client import get_supabase_admin
 from utils.auth import get_current_user
 
@@ -59,7 +60,13 @@ async def toggle_share(run_id: str, body: dict, user: dict = Depends(get_current
     """Enable or disable public sharing for a run. Body: {"is_public": true|false}"""
     db = get_supabase_admin()
     is_public = body.get("is_public", False)
-    result = db.table("qa_runs").update({"is_public": is_public}).eq("id", run_id).eq("user_id", user["user_id"]).execute()
+    result = db.table("qa_runs").update({"is_public": is_public}).eq("id", run_id).eq("user_id", user["user_id"]).select("id,is_public,share_token").execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Run not found")
-    return {"run_id": run_id, "is_public": is_public}
+    # Return the shareable_url so the frontend can copy it immediately without a re-fetch
+    row = result.data[0]
+    shareable_url: str | None = None
+    if is_public and row.get("share_token"):
+        settings = get_settings()
+        shareable_url = f"{settings.app_base_url.rstrip('/')}/shared/{row['share_token']}"
+    return {"run_id": run_id, "is_public": is_public, "shareable_url": shareable_url}

@@ -4,9 +4,12 @@ Orchestrates Tier 1 (sync) and Tier 2 (async I/O) checks.
 Computes readiness score. Writes results to Supabase.
 """
 import importlib
+import logging
 import pkgutil
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+logger = logging.getLogger(__name__)
 
 from agents.checks.base import CheckRegistry
 from core.models import CheckResult, CheckStatus, RunContext, Severity
@@ -190,8 +193,8 @@ def run_tier2_background(run_id: str, user_id: str, ctx: RunContext, tier1_resul
         # Refresh benchmark materialized view so new data feeds into comparisons
         try:
             db.rpc("refresh_benchmark_view").execute()
-        except Exception:
-            pass  # view may not exist in early deployments
+        except Exception as refresh_exc:
+            logger.warning("benchmark refresh failed for run %s: %s", run_id, refresh_exc)
 
         # Fire-and-forget email notification
         run_row = db.table("qa_runs").select("run_name").eq("id", run_id).single().execute()

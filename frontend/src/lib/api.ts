@@ -120,7 +120,7 @@ export const api = {
     apiFetch<unknown[]>('/api/v1/runs'),
 
   toggleShare: (runId: string, isPublic: boolean) =>
-    apiFetch(`/api/v1/runs/${runId}/share`, { method: 'PATCH', body: JSON.stringify({ is_public: isPublic }) }),
+    apiFetch<{ run_id: string; is_public: boolean; shareable_url: string | null }>(`/api/v1/runs/${runId}/share`, { method: 'PATCH', body: JSON.stringify({ is_public: isPublic }) }),
 
   getSharedReport: async (token: string): Promise<RunReport> => {
     const r = await fetch(`${BASE_URL}/api/v1/reports/share/${token}`)
@@ -166,10 +166,11 @@ export const api = {
     }),
 
   // ── Benchmark ─────────────────────────────────────────────────────────────
-  getBenchmark: (platform: string, industryVertical?: string) =>
-    apiFetch<{ check_id: string; check_category: string; pass_rate_pct: number }[]>(
-      `/api/v1/benchmark?platform=${platform}${industryVertical ? `&industry_vertical=${industryVertical}` : ''}`
-    ),
+  getBenchmark: (platform: string, industryVertical?: string) => {
+    const params = new URLSearchParams({ platform })
+    if (industryVertical) params.set('industry_vertical', industryVertical)
+    return apiFetch<{ check_id: string; check_category: string; pass_rate_pct: number }[]>(`/api/v1/benchmark?${params}`)
+  },
 
   // ── API Keys ──────────────────────────────────────────────────────────────
   listApiKeys: () =>

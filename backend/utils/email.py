@@ -3,6 +3,7 @@ Email notification utility via Resend REST API.
 Uses httpx (already a dependency) — no extra package needed.
 Only sends if RESEND_API_KEY is configured.
 """
+from html import escape
 import httpx
 from core.config import get_settings
 
@@ -27,6 +28,7 @@ def send_run_complete_email(
     score_int = round(score)
     score_color = "#22c55e" if score_int >= 80 else "#f59e0b" if score_int >= 60 else "#ef4444"
     label = "Ready to launch" if score_int >= 80 else "Needs attention" if score_int >= 60 else "Critical issues found"
+    safe_run_name = escape(run_name)
 
     html = f"""
 <!DOCTYPE html>
@@ -39,7 +41,7 @@ def send_run_complete_email(
     </div>
     <div style="padding:32px">
       <p style="color:#0f172a;font-size:16px;font-weight:600;margin:0 0 4px">Your QA run is complete</p>
-      <p style="color:#64748b;font-size:14px;margin:0 0 24px">{run_name}</p>
+      <p style="color:#64748b;font-size:14px;margin:0 0 24px">{safe_run_name}</p>
 
       <div style="text-align:center;background:#f8fafc;border-radius:12px;padding:24px;margin-bottom:24px">
         <p style="color:{score_color};font-size:56px;font-weight:900;margin:0;line-height:1">{score_int}</p>
@@ -82,7 +84,7 @@ def send_run_complete_email(
             json={
                 "from": settings.notify_email_from,
                 "to": [to_email],
-                "subject": f"QA Complete: {run_name} — Score {score_int}/100",
+                "subject": f"QA Complete: {safe_run_name} — Score {score_int}/100",
                 "html": html,
             },
             timeout=10,
