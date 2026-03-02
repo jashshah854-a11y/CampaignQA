@@ -111,6 +111,8 @@ export default function ComparePage() {
   const [error, setError] = useState('')
   const [showUnchanged, setShowUnchanged] = useState(false)
 
+  useEffect(() => { document.title = 'Compare Runs — LaunchProof' }, [])
+
   useEffect(() => {
     if (!runA || !runB) {
       setError('Two run IDs are required: /compare?a=<id>&b=<id>')

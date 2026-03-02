@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function LoginPage() {
+  useEffect(() => { document.title = 'Sign in — LaunchProof' }, [])
   const { session } = useAuth()
   const [email, setEmail] = useState('')
   const [otp, setOtp] = useState('')

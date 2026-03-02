@@ -76,6 +76,8 @@ export default function NewRunPage() {
   const [urlMode, setUrlMode] = useState<'paste' | 'csv'>('paste')
   const [usageInfo, setUsageInfo] = useState<{ used: number; limit: number; plan: string } | null>(null)
 
+  useEffect(() => { document.title = 'New QA Run — LaunchProof' }, [])
+
   useEffect(() => {
     api.getProfile()
       .then(p => {

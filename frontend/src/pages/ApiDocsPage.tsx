@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 
 const BASE = import.meta.env.VITE_API_URL as string
@@ -37,6 +38,7 @@ function Section({ title, method, path, desc, children }: {
 }
 
 export default function ApiDocsPage() {
+  useEffect(() => { document.title = 'API Docs — LaunchProof' }, [])
   return (
     <div className="max-w-3xl mx-auto py-10 px-4">
       {/* Nav */}

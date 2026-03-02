@@ -28,6 +28,8 @@ export default function RunPage() {
   const extraRef = useRef(extraProgress)
   extraRef.current = extraProgress
 
+  useEffect(() => { document.title = 'Running checks… — LaunchProof' }, [])
+
   // Cycle through phase messages every 2.5s for a sense of progress
   useEffect(() => {
     const timer = setInterval(() => {
