@@ -197,7 +197,7 @@ async def get_run_report(run_id: str, user: dict = Depends(get_current_user)):
     )
 
     settings_obj = __import__("core.config", fromlist=["get_settings"]).get_settings()
-    frontend_url = settings_obj.cors_origins_list[0] if settings_obj.cors_origins_list else ""
+    frontend_url = settings_obj.app_base_url.rstrip("/")
     share_url = f"{frontend_url}/reports/share/{r.get('share_token')}" if r.get("share_token") else None
 
     report = RunReportResponse(
@@ -234,7 +234,7 @@ async def get_run_report(run_id: str, user: dict = Depends(get_current_user)):
 async def list_runs(user: dict = Depends(get_current_user)):
     db = get_supabase_admin()
     result = db.table("qa_runs").select(
-        "id,run_name,platform,status,readiness_score,total_checks,passed_checks,failed_checks,warning_checks,created_at,completed_at"
+        "id,run_name,platform,status,readiness_score,total_checks,passed_checks,failed_checks,warning_checks,created_at,completed_at,share_token,is_public"
     ).eq("user_id", user["user_id"]).order("created_at", desc=True).limit(50).execute()
     return result.data or []
 

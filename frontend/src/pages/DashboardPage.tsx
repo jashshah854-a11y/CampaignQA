@@ -17,6 +17,8 @@ interface RunRow {
   warning_checks: number | null
   created_at: string
   completed_at: string | null
+  share_token: string | null
+  is_public: boolean
 }
 
 const statusPill: Record<string, string> = {
@@ -83,11 +85,13 @@ function ScoreTrend({ runs }: { runs: RunRow[] }) {
 function RunMenu({
   runId,
   runStatus,
+  shareToken,
   allRuns,
   onDelete,
 }: {
   runId: string
   runStatus: string
+  shareToken: string | null
   allRuns: RunRow[]
   onDelete: (id: string) => void
 }) {
@@ -95,6 +99,7 @@ function RunMenu({
   const [open, setOpen] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [rerunning, setRerunning] = useState(false)
+  const [copyMsg, setCopyMsg] = useState('')
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -142,6 +147,27 @@ function RunMenu({
                   className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 font-medium"
                 >
                   ↺ Re-run checks
+                </button>
+              )}
+              {runStatus === 'completed' && shareToken && (
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation()
+                    let url: string
+                    try {
+                      const res = await api.toggleShare(runId, true)
+                      void res
+                      url = `${window.location.origin}/reports/share/${shareToken}`
+                    } catch {
+                      url = `${window.location.origin}/reports/share/${shareToken}`
+                    }
+                    await navigator.clipboard.writeText(url)
+                    setCopyMsg('Copied!')
+                    setTimeout(() => { setCopyMsg(''); setOpen(false) }, 1500)
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  {copyMsg || '🔗 Copy share link'}
                 </button>
               )}
               {runStatus === 'completed' && otherCompleted.length > 0 && (
@@ -452,7 +478,7 @@ export default function DashboardPage() {
                       )}
                     </div>
                   </div>
-                  <RunMenu runId={run.id} runStatus={run.status} allRuns={runs} onDelete={handleDelete} />
+                  <RunMenu runId={run.id} runStatus={run.status} shareToken={run.share_token} allRuns={runs} onDelete={handleDelete} />
                 </div>
               </div>
             ))}

@@ -131,7 +131,7 @@ def _notify_user(user_id: str, run_id: str, run_name: str, score: float) -> None
         ).eq("id", user_id).single().execute()
         profile = profile_row.data or {}
         settings = get_settings()
-        origin = settings.cors_origins_list[0].rstrip("/")
+        origin = settings.app_base_url.rstrip("/")
         run_url = f"{origin}/runs/{run_id}/report"
 
         # Fetch run summary for webhook payload

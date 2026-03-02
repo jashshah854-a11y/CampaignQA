@@ -117,8 +117,14 @@ export const api = {
   toggleShare: (runId: string, isPublic: boolean) =>
     apiFetch(`/api/v1/runs/${runId}/share`, { method: 'PATCH', body: JSON.stringify({ is_public: isPublic }) }),
 
-  getSharedReport: (token: string) =>
-    fetch(`${BASE_URL}/api/v1/reports/share/${token}`).then(r => r.json()) as Promise<RunReport>,
+  getSharedReport: async (token: string): Promise<RunReport> => {
+    const r = await fetch(`${BASE_URL}/api/v1/reports/share/${token}`)
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({ detail: r.statusText }))
+      throw new Error(err.detail || `API error ${r.status}`)
+    }
+    return r.json()
+  },
 
   rerun: (runId: string) =>
     apiFetch<CreateRunResponse>(`/api/v1/runs/${runId}/rerun`, { method: 'POST' }),
