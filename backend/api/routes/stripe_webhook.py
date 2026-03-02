@@ -59,6 +59,7 @@ async def stripe_webhook(request: Request):
         session = event["data"]["object"]
         user_id = session.get("client_reference_id")
         price_id = session.get("metadata", {}).get("price_id", "")
+        stripe_customer_id = session.get("customer")
 
         if not user_id:
             return {"status": "skipped"}
@@ -69,9 +70,34 @@ async def stripe_webhook(request: Request):
         if price_id == settings.stripe_price_agency_monthly:
             plan = "agency"
 
-        db.table("profiles").update({
-            "plan_tier": plan,
-            "reports_limit": 999,
-        }).eq("id", user_id).execute()
+        update_payload: dict = {"plan_tier": plan, "reports_limit": 999}
+        if stripe_customer_id:
+            update_payload["stripe_customer_id"] = stripe_customer_id
+
+        db.table("profiles").update(update_payload).eq("id", user_id).execute()
 
     return {"status": "ok"}
+
+
+@router.post("/billing-portal")
+async def create_billing_portal_session(body: dict, user: dict = Depends(get_current_user)):
+    """Create a Stripe Customer Portal session so paid users can manage their subscription."""
+    settings = get_settings()
+    if not settings.stripe_secret_key:
+        raise HTTPException(status_code=503, detail="Payments not configured")
+
+    stripe.api_key = settings.stripe_secret_key
+
+    db = get_supabase_admin()
+    profile = db.table("profiles").select("stripe_customer_id").eq("id", user["user_id"]).single().execute()
+    stripe_customer_id = profile.data.get("stripe_customer_id") if profile.data else None
+
+    if not stripe_customer_id:
+        raise HTTPException(status_code=404, detail="No active subscription found")
+
+    return_url = body.get("return_url") or f"{settings.app_base_url.rstrip('/')}/settings"
+    portal_session = stripe.billing_portal.Session.create(
+        customer=stripe_customer_id,
+        return_url=return_url,
+    )
+    return {"portal_url": portal_session.url}

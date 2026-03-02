@@ -212,6 +212,9 @@ ALTER TABLE qa_runs ADD COLUMN IF NOT EXISTS notes text;
 -- Generic outbound webhook URL (POST JSON payload on run complete — n8n/Zapier/Make compatible)
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS webhook_url text;
 
+-- Stripe customer ID — stored on first successful checkout for billing portal access
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS stripe_customer_id text;
+
 -- Helper RPC to refresh benchmark materialized view (called from server startup)
 -- Run this migration ONCE in Supabase SQL Editor
 CREATE OR REPLACE FUNCTION refresh_benchmark_view()

@@ -154,6 +154,12 @@ export const api = {
       }),
     }),
 
+  createBillingPortalSession: () =>
+    apiFetch<{ portal_url: string }>('/api/v1/stripe/billing-portal', {
+      method: 'POST',
+      body: JSON.stringify({ return_url: `${window.location.origin}/settings` }),
+    }),
+
   // ── Benchmark ─────────────────────────────────────────────────────────────
   getBenchmark: (platform: string, industryVertical?: string) =>
     apiFetch<{ check_id: string; check_category: string; pass_rate_pct: number }[]>(

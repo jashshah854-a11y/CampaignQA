@@ -38,6 +38,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [upgradeLoading, setUpgradeLoading] = useState(false)
+  const [portalLoading, setPortalLoading] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
   const [error, setError] = useState('')
 
@@ -87,6 +88,17 @@ export default function SettingsPage() {
       setError('Could not save changes')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleManageSubscription = async () => {
+    setPortalLoading(true)
+    try {
+      const { portal_url } = await api.createBillingPortalSession()
+      window.location.href = portal_url
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Could not open billing portal')
+      setPortalLoading(false)
     }
   }
 
@@ -198,6 +210,16 @@ export default function SettingsPage() {
               <span className="font-medium text-slate-900">
                 {profile ? new Date(profile.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : '—'}
               </span>
+            </div>
+            <div className="pt-3 border-t border-slate-100">
+              <button
+                onClick={handleManageSubscription}
+                disabled={portalLoading}
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50 transition-colors"
+              >
+                {portalLoading ? 'Opening portal…' : 'Manage subscription →'}
+              </button>
+              <p className="text-xs text-slate-400 mt-0.5">Cancel, change plan, or update payment method</p>
             </div>
           </div>
         )}
