@@ -50,7 +50,7 @@ function AppRoutes() {
         <Route path="/settings"  element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/compare"   element={<ProtectedRoute><ComparePage /></ProtectedRoute>} />
         <Route path="/api-docs"  element={<ProtectedRoute><ApiDocsPage /></ProtectedRoute>} />
-        <Route path="/checks"    element={<ProtectedRoute><ChecksCatalogPage /></ProtectedRoute>} />
+        <Route path="/checks"    element={<ChecksCatalogPage />} />
         <Route path="/runs/:runId"        element={<ProtectedRoute><RunPage /></ProtectedRoute>} />
         <Route path="/runs/:runId/report" element={<ProtectedRoute><ReportPage /></ProtectedRoute>} />
 

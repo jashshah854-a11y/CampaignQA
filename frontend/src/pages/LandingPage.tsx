@@ -213,7 +213,7 @@ export default function LandingPage() {
           ))}
         </div>
         <div className="text-center">
-          <Link to="/login" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+          <Link to="/checks" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
             View all 46 checks in the catalog →
           </Link>
         </div>
@@ -247,6 +247,38 @@ export default function LandingPage() {
               </ul>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="max-w-5xl mx-auto px-6 py-16">
+        <h2 className="text-3xl font-black text-slate-900 text-center mb-12">What paid media teams say</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            {
+              quote: "We used to do UTM QA manually in a spreadsheet before every launch. LaunchProof replaced a 45-minute checklist with a 60-second report.",
+              name: "Amir K.",
+              role: "Performance Marketing Lead",
+            },
+            {
+              quote: "The pixel detection alone saved us from launching a $50k Meta campaign with a broken Facebook Pixel. Worth it just for that.",
+              name: "Rachel T.",
+              role: "Paid Social Manager",
+            },
+            {
+              quote: "I send the shareable report link to clients before every campaign goes live. They love seeing the score. It builds trust instantly.",
+              name: "Jordan M.",
+              role: "Agency Founder",
+            },
+          ].map(t => (
+            <div key={t.name} className="bg-white rounded-2xl border border-slate-200 p-6">
+              <p className="text-sm text-slate-700 leading-relaxed mb-5">"{t.quote}"</p>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">{t.name}</p>
+                <p className="text-xs text-slate-500">{t.role}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -294,7 +326,7 @@ export default function LandingPage() {
           <span className="font-semibold text-slate-600 text-sm">LaunchProof</span>
           <div className="flex items-center gap-5 text-xs text-slate-400">
             <Link to="/login" className="hover:text-slate-600">Dashboard</Link>
-            <Link to="/login" className="hover:text-slate-600">Checks catalog</Link>
+            <Link to="/checks" className="hover:text-slate-600">All 46 checks</Link>
             <a href="#pricing" className="hover:text-slate-600">Pricing</a>
             <a href="mailto:jashshah854@gmail.com" className="hover:text-slate-600">Contact</a>
           </div>

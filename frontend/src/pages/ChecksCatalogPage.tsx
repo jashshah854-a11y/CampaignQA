@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface CheckSpec {
   id: string
@@ -77,6 +78,7 @@ const CATEGORIES = [...new Set(CHECKS.map(c => c.category))]
 
 export default function ChecksCatalogPage() {
   useEffect(() => { document.title = 'Checks Catalog — LaunchProof' }, [])
+  const { session } = useAuth()
   const [search, setSearch] = useState('')
   const [severityFilter, setSeverityFilter] = useState<string>('all')
   const [tierFilter, setTierFilter] = useState<number | 'all'>('all')
@@ -94,7 +96,9 @@ export default function ChecksCatalogPage() {
   return (
     <div className="max-w-4xl mx-auto py-10 px-4">
       <div className="mb-6">
-        <Link to="/dashboard" className="text-sm text-blue-600 hover:underline mb-3 block">← Dashboard</Link>
+        <Link to={session ? '/dashboard' : '/'} className="text-sm text-blue-600 hover:underline mb-3 block">
+          {session ? '← Dashboard' : '← Home'}
+        </Link>
         <h1 className="text-2xl font-bold text-slate-900">Checks Catalog</h1>
         <p className="text-slate-500 mt-1 text-sm">
           {CHECKS.length} checks across {CATEGORIES.length} categories.
@@ -189,10 +193,10 @@ export default function ChecksCatalogPage() {
         <p className="text-sm font-semibold text-blue-900 mb-1">All checks run automatically on every QA run</p>
         <p className="text-xs text-blue-700 mb-3">No configuration needed. Platform-specific checks only fire for the selected platform.</p>
         <Link
-          to="/new"
+          to={session ? '/new' : '/login'}
           className="inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors"
         >
-          Run a QA Check →
+          {session ? 'Run a QA Check →' : 'Get started free →'}
         </Link>
       </div>
     </div>
