@@ -209,6 +209,117 @@ class UtmQueryStringOrderCheck(BaseCheck):
         )
 
 
+class UtmValueEncodingCheck(BaseCheck):
+    """
+    Catches improperly encoded characters in UTM parameter values.
+
+    Spaces (raw, %20, or +), ampersands (&), and other unescaped special characters
+    inside UTM values corrupt the parameter in analytics tools, causing sessions to be
+    attributed to a malformed campaign name like 'Black+Friday+2025' instead of 'Black Friday 2025'.
+    """
+    check_id = "utm_value_encoding"
+    check_name = "UTM Value Encoding"
+    check_category = "utm"
+    platforms = ["universal"]
+    severity = Severity.major
+    tier = 1
+
+    _SUSPICIOUS_PATTERNS = {
+        "%20": "raw space encoded as %20 — use underscore or hyphen instead",
+        "+": "'+' in UTM value — ambiguous; may be decoded as a space by some platforms",
+    }
+
+    def execute(self, ctx: RunContext) -> CheckResult:
+        from urllib.parse import urlparse, parse_qsl
+        issues: list[str] = []
+
+        for u in ctx.urls:
+            parsed = urlparse(u.raw_url)
+            try:
+                pairs = parse_qsl(parsed.query, keep_blank_values=True)
+            except Exception:
+                continue
+
+            for key, value in pairs:
+                if not key.startswith("utm_"):
+                    continue
+                # Raw space — should never appear (browser encodes it, but some tools don't)
+                if " " in value:
+                    issues.append(f"{u.raw_url} — {key}='{value}' contains a raw space")
+                elif "%20" in value:
+                    issues.append(f"{u.raw_url} — {key}='{value}' uses %20 (use underscore or hyphen instead)")
+                # + is decoded as space by form encoders; in query strings it's technically valid
+                # but GA4/Meta may decode it inconsistently
+                elif "+" in value and key in ("utm_campaign", "utm_source", "utm_medium"):
+                    issues.append(f"{u.raw_url} — {key}='{value}' contains '+' which may be decoded as space by some platforms")
+
+        if not issues:
+            return self._result(CheckStatus.passed, "UTM parameter values appear correctly encoded")
+
+        return self._result(
+            CheckStatus.warning,
+            f"{len(issues)} UTM value(s) with potentially problematic encoding — may show garbled campaign names in analytics",
+            recommendation=(
+                "Use underscores or hyphens instead of spaces in UTM values. "
+                "Avoid %20 or + in campaign names, sources, and mediums."
+            ),
+            affected_items=issues,
+        )
+
+
+class TrailingSlashConsistencyCheck(BaseCheck):
+    """
+    Warns when some destination URLs have trailing slashes and others don't.
+
+    /shop/ and /shop are treated as distinct pages by most analytics tools and CDNs.
+    If half your URLs use trailing slashes, GA4 and ad platforms split session data
+    across two page paths, fragmenting attribution and making conversion data unreliable.
+    """
+    check_id = "trailing_slash_consistency"
+    check_name = "Trailing Slash Consistency"
+    check_category = "url"
+    platforms = ["universal"]
+    severity = Severity.minor
+    tier = 1
+
+    def execute(self, ctx: RunContext) -> CheckResult:
+        from urllib.parse import urlparse
+
+        if len(ctx.urls) < 2:
+            return self._result(CheckStatus.skipped, "Only one URL provided — trailing slash consistency check skipped")
+
+        with_slash: list[str] = []
+        without_slash: list[str] = []
+
+        for u in ctx.urls:
+            parsed = urlparse(u.raw_url)
+            path = parsed.path
+            if path and path != "/" and path.endswith("/"):
+                with_slash.append(u.raw_url)
+            elif path and not path.endswith("/"):
+                without_slash.append(u.raw_url)
+
+        if with_slash and without_slash:
+            return self._result(
+                CheckStatus.warning,
+                f"Mixed trailing slashes: {len(with_slash)} URL(s) with trailing slash, {len(without_slash)} without — GA4 will count these as different pages",
+                recommendation=(
+                    "Standardise all landing page URLs to either consistently use trailing slashes "
+                    "(https://site.com/page/) or not (https://site.com/page). "
+                    "Most servers should 301-redirect one form to the other."
+                ),
+                affected_items=(
+                    [f"WITH slash: {u}" for u in with_slash[:3]] +
+                    [f"WITHOUT slash: {u}" for u in without_slash[:3]]
+                ),
+            )
+
+        return self._result(
+            CheckStatus.passed,
+            "Trailing slash usage is consistent across all URLs",
+        )
+
+
 # Register all
 for cls in [
     HttpsCheck,
@@ -219,5 +330,7 @@ for cls in [
     UrlNoTrailingSpacesCheck,
     UrlDuplicateCheck,
     UtmQueryStringOrderCheck,
+    UtmValueEncodingCheck,
+    TrailingSlashConsistencyCheck,
 ]:
     CheckRegistry.register(cls())
