@@ -16,6 +16,21 @@ const VERTICALS = ['ecommerce', 'saas', 'lead_gen', 'app_install', 'other']
 
 type UrlEntry = { url: string; ad_name?: string; ad_set_name?: string; campaign_name?: string }
 
+const SAMPLE_CSV = `url,ad_name,ad_set_name,campaign_name
+https://yoursite.com/landing?utm_source=facebook&utm_medium=paid_social&utm_campaign=bfcm_2025,Ad 1 - Image,Lookalike 1%,BFCM 2025
+https://yoursite.com/product?utm_source=instagram&utm_medium=paid_social&utm_campaign=bfcm_2025,Ad 2 - Video,Lookalike 2%,BFCM 2025
+`
+
+function downloadSampleCsv() {
+  const blob = new Blob([SAMPLE_CSV], { type: 'text/csv' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'launchproof-sample.csv'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 /** Parse a CSV file into UrlEntry[].
  *  Expected columns (header optional): url, ad_name, ad_set_name, campaign_name
  *  Falls back to treating every non-empty line as a plain URL if no header found.
@@ -228,6 +243,13 @@ export default function NewRunPage() {
                 onChange={handleCsvUpload}
                 className="hidden"
               />
+              <button
+                type="button"
+                onClick={downloadSampleCsv}
+                className="mt-2 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                Download sample CSV template
+              </button>
               {csvEntries.length > 0 && (
                 <div className="mt-2 max-h-32 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-2">
                   {csvEntries.slice(0, 5).map((e, i) => (

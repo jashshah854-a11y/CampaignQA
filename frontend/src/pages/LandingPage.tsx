@@ -41,7 +41,7 @@ export default function LandingPage() {
           Stop launching broken<br />ad campaigns
         </h1>
         <p className="text-xl text-slate-500 max-w-2xl mx-auto mb-8">
-          One misconfigured UTM or missing pixel = wasted ad spend. LaunchProof runs 30+ automated checks on your campaign URLs before you go live — and gives you a readiness score.
+          One misconfigured UTM or missing pixel = wasted ad spend. LaunchProof runs 46 automated checks on your campaign URLs before you go live — and gives you a readiness score.
         </p>
         <div className="flex items-center justify-center gap-4 flex-wrap">
           <Link
@@ -95,7 +95,7 @@ export default function LandingPage() {
 
       {/* Checks grid */}
       <section className="max-w-5xl mx-auto px-6 py-16">
-        <h2 className="text-3xl font-black text-slate-900 text-center mb-3">30+ automated checks</h2>
+        <h2 className="text-3xl font-black text-slate-900 text-center mb-3">46 automated checks</h2>
         <p className="text-slate-500 text-center mb-10">Everything a performance marketer needs to verify before pressing Go.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {CHECKS.map(c => (
@@ -144,9 +144,9 @@ export default function LandingPage() {
         <h2 className="text-3xl font-black text-slate-900 text-center mb-10">Simple pricing</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { name: 'Free', price: '$0', features: ['Unlimited QA runs', 'All 30+ checks', 'Shareable report links', 'Export PDF'] },
-            { name: 'Pro', price: '$29/mo', features: ['Everything in Free', 'Client-branded reports', 'Priority support', 'CSV bulk import'], highlight: true },
-            { name: 'Agency', price: '$79/mo', features: ['Everything in Pro', 'Multiple team members', 'White-label reports', 'API access'] },
+            { name: 'Free', price: '$0', features: ['3 QA runs to get started', 'All 46 checks', 'Shareable report links', 'Export PDF & JSON'] },
+            { name: 'Pro', price: '$29/mo', features: ['Unlimited QA runs', 'CSV bulk import', 'Outbound webhook (n8n/Zapier)', 'API access'], highlight: true },
+            { name: 'Agency', price: '$79/mo', features: ['Everything in Pro', 'Multiple team members', 'White-label reports', 'Priority support'] },
           ].map(tier => (
             <div key={tier.name} className={`rounded-2xl p-6 border ${tier.highlight ? 'border-2 border-blue-500 bg-blue-50' : 'border-slate-200 bg-white'}`}>
               <p className="font-bold text-slate-900 mb-1">{tier.name}</p>

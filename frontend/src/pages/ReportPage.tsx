@@ -356,6 +356,35 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
         </div>
       </div>
 
+      {/* Checked URLs */}
+      {report.urls.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
+          <h3 className="text-sm font-semibold text-slate-700 mb-3">
+            Checked URLs <span className="text-slate-400 font-normal">({report.urls.length})</span>
+          </h3>
+          <div className="space-y-1.5">
+            {report.urls.map(u => (
+              <div key={u.id} className="flex items-start gap-2 group">
+                <a
+                  href={u.raw_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-mono text-blue-600 hover:text-blue-800 truncate flex-1 min-w-0"
+                  title={u.raw_url}
+                >
+                  {u.raw_url}
+                </a>
+                {(u.ad_name || u.ad_set_name) && (
+                  <span className="text-xs text-slate-400 flex-shrink-0 whitespace-nowrap">
+                    {[u.ad_name, u.ad_set_name].filter(Boolean).join(' · ')}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Check list with filters */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
@@ -431,7 +460,7 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
             to="/login"
             className="inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-colors"
           >
-            Try CampaignQA Free →
+            Try LaunchProof Free →
           </Link>
         </div>
       )}

@@ -11,60 +11,58 @@ interface CheckSpec {
 }
 
 const CHECKS: CheckSpec[] = [
-  // UTM — Tier 1
-  { id: 'utm_source_present', name: 'UTM Source Present', category: 'UTM', severity: 'critical', tier: 1, platforms: ['universal'], description: 'Verifies utm_source is on every URL.' },
-  { id: 'utm_medium_present', name: 'UTM Medium Present', category: 'UTM', severity: 'critical', tier: 1, platforms: ['universal'], description: 'Verifies utm_medium is on every URL.' },
-  { id: 'utm_campaign_present', name: 'UTM Campaign Present', category: 'UTM', severity: 'critical', tier: 1, platforms: ['universal'], description: 'Verifies utm_campaign is on every URL.' },
+  // ── UTM — Tier 1 ────────────────────────────────────────────────────────────
+  { id: 'utm_source_present', name: 'UTM Source Present', category: 'UTM', severity: 'critical', tier: 1, platforms: ['universal'], description: 'Verifies utm_source is on every destination URL.' },
+  { id: 'utm_medium_present', name: 'UTM Medium Present', category: 'UTM', severity: 'critical', tier: 1, platforms: ['universal'], description: 'Verifies utm_medium is on every destination URL.' },
+  { id: 'utm_campaign_present', name: 'UTM Campaign Present', category: 'UTM', severity: 'critical', tier: 1, platforms: ['universal'], description: 'Verifies utm_campaign is on every destination URL.' },
   { id: 'utm_no_spaces', name: 'UTM Values: No Spaces', category: 'UTM', severity: 'major', tier: 1, platforms: ['universal'], description: 'Catches raw spaces in UTM parameter values.' },
   { id: 'utm_case_consistency', name: 'UTM Case Consistency', category: 'UTM', severity: 'major', tier: 1, platforms: ['universal'], description: 'Ensures utm_campaign is lowercase across all URLs to prevent GA4 splitting data.' },
   { id: 'utm_source_matches_platform', name: 'UTM Source Matches Platform', category: 'UTM', severity: 'major', tier: 1, platforms: ['meta', 'google', 'tiktok', 'linkedin'], description: 'Checks utm_source matches the selected ad platform.' },
   { id: 'utm_no_duplicate_params', name: 'No Duplicate UTM Params', category: 'UTM', severity: 'major', tier: 1, platforms: ['universal'], description: 'Detects duplicate query string keys that corrupt analytics.' },
   { id: 'utm_cross_url_consistency', name: 'Cross-URL UTM Consistency', category: 'UTM', severity: 'major', tier: 1, platforms: ['universal'], description: 'Flags utm_campaign mismatches across URLs in the same run.' },
   { id: 'utm_content_term_best_practice', name: 'UTM Content & Term Best Practices', category: 'UTM', severity: 'minor', tier: 1, platforms: ['universal'], description: 'Warns when utm_content or utm_term are missing.' },
-  { id: 'platform_utm_medium_alignment', name: 'Platform–Medium Alignment', category: 'UTM', severity: 'major', tier: 1, platforms: ['meta', 'google', 'tiktok', 'linkedin'], description: 'Ensures paid_social for social platforms, cpc for search — prevents GA4 channel mis-grouping.' },
-  { id: 'utm_id_ga4', name: 'utm_id for GA4 Linking (Google)', category: 'UTM', severity: 'minor', tier: 1, platforms: ['google'], description: 'Warns when manual Google UTMs lack utm_id, which breaks Google Ads ↔ GA4 data linking.' },
+  { id: 'utm_medium_platform_alignment', name: 'Platform–Medium Alignment', category: 'UTM', severity: 'major', tier: 1, platforms: ['meta', 'google', 'tiktok', 'linkedin'], description: 'Ensures paid_social for social platforms, cpc for search — prevents GA4 channel mis-grouping.' },
+  { id: 'utm_id_ga4', name: 'utm_id for GA4 Linking', category: 'UTM', severity: 'minor', tier: 1, platforms: ['google'], description: 'Warns when manual Google UTMs lack utm_id, which breaks Google Ads ↔ GA4 data linking.' },
   { id: 'click_id_conflict', name: 'Click ID Platform Conflict', category: 'UTM', severity: 'major', tier: 1, platforms: ['universal'], description: 'Detects gclid/fbclid/ttclid on the wrong platform — indicates copy-paste errors.' },
   { id: 'utm_query_string_order', name: 'UTM Parameters Early in Query String', category: 'UTM', severity: 'minor', tier: 1, platforms: ['universal'], description: 'Warns if UTMs are buried after other params — ad servers can truncate long query strings.' },
   { id: 'utm_value_encoding', name: 'UTM Value Encoding', category: 'UTM', severity: 'major', tier: 1, platforms: ['universal'], description: 'Catches %20, +, or raw spaces in UTM values that cause garbled campaign names in analytics.' },
-  // URL — Tier 1
-  { id: 'https_check', name: 'HTTPS Enforced', category: 'URL', severity: 'critical', tier: 1, platforms: ['universal'], description: 'All destination URLs must use HTTPS — HTTP is blocked by all major ad platforms.' },
+  // ── URL — Tier 1 ────────────────────────────────────────────────────────────
+  { id: 'url_uses_https', name: 'HTTPS Enforced', category: 'URL', severity: 'critical', tier: 1, platforms: ['universal'], description: 'All destination URLs must use HTTPS — HTTP is blocked by all major ad platforms.' },
   { id: 'url_parseable', name: 'URL Parseable', category: 'URL', severity: 'critical', tier: 1, platforms: ['universal'], description: 'Checks every URL can be parsed (no syntax errors).' },
   { id: 'url_no_fragment', name: 'No Hash Fragment Tracking', category: 'URL', severity: 'major', tier: 1, platforms: ['universal'], description: 'Hash fragments (#) are not sent to servers — UTM params after # are stripped.' },
   { id: 'url_uniform_domain', name: 'Uniform Domain', category: 'URL', severity: 'minor', tier: 1, platforms: ['universal'], description: 'All URLs should point to the same domain unless running multi-domain campaigns.' },
-  { id: 'url_excessive_length', name: 'URL Length', category: 'URL', severity: 'minor', tier: 1, platforms: ['universal'], description: 'Warns when URLs exceed 2000 characters — some ad servers truncate at this limit.' },
-  { id: 'url_no_trailing_spaces', name: 'No Trailing Spaces in URLs', category: 'URL', severity: 'major', tier: 1, platforms: ['universal'], description: 'Raw whitespace at URL end causes 404 errors.' },
-  { id: 'url_duplicate', name: 'Duplicate URLs', category: 'URL', severity: 'major', tier: 1, platforms: ['universal'], description: 'Flags identical destination URLs within the same run.' },
+  { id: 'url_length', name: 'URL Length', category: 'URL', severity: 'minor', tier: 1, platforms: ['universal'], description: 'Warns when URLs exceed 2000 characters — some ad servers truncate at this limit.' },
+  { id: 'url_no_whitespace', name: 'No Trailing Whitespace in URLs', category: 'URL', severity: 'major', tier: 1, platforms: ['universal'], description: 'Raw whitespace at URL end causes 404 errors.' },
+  { id: 'url_no_duplicates', name: 'Duplicate URLs', category: 'URL', severity: 'major', tier: 1, platforms: ['universal'], description: 'Flags identical destination URLs within the same run.' },
   { id: 'trailing_slash_consistency', name: 'Trailing Slash Consistency', category: 'URL', severity: 'minor', tier: 1, platforms: ['universal'], description: 'Mixed trailing slashes (/page/ vs /page) split GA4 page data.' },
-  // Creative — Tier 1
-  { id: 'meta_headline_length', name: 'Meta Headline Length', category: 'Creative', severity: 'major', tier: 1, platforms: ['meta'], description: 'Headline must be ≤40 characters for Meta ads.' },
-  { id: 'meta_primary_text_length', name: 'Meta Primary Text Length', category: 'Creative', severity: 'major', tier: 1, platforms: ['meta'], description: 'Primary text must be ≤125 characters for Meta ads.' },
-  { id: 'google_headline_length', name: 'Google Headline Length', category: 'Creative', severity: 'major', tier: 1, platforms: ['google'], description: 'Each headline must be ≤30 characters for Google RSAs.' },
-  { id: 'google_description_length', name: 'Google Description Length', category: 'Creative', severity: 'major', tier: 1, platforms: ['google'], description: 'Descriptions must be ≤90 characters for Google ads.' },
-  { id: 'tiktok_headline_length', name: 'TikTok Headline Length', category: 'Creative', severity: 'major', tier: 1, platforms: ['tiktok'], description: 'TikTok ad text must be ≤100 characters.' },
-  { id: 'linkedin_headline_length', name: 'LinkedIn Headline Length', category: 'Creative', severity: 'major', tier: 1, platforms: ['linkedin'], description: 'LinkedIn intro text must be ≤150 characters.' },
-  // Tracking — Tier 2
-  { id: 'pixel_present', name: 'Platform Pixel Present', category: 'Tracking', severity: 'critical', tier: 2, platforms: ['meta', 'google', 'tiktok', 'linkedin'], description: 'Scans landing page HTML for the correct platform pixel.' },
+  // ── Creative — Tier 1 ───────────────────────────────────────────────────────
+  { id: 'headline_char_limit', name: 'Headline Character Limit', category: 'Creative', severity: 'critical', tier: 1, platforms: ['meta', 'google', 'linkedin'], description: 'Checks headline against platform-specific character limits (Meta 40, Google 30, LinkedIn 150).' },
+  { id: 'primary_text_char_limit', name: 'Primary Text Character Limit', category: 'Creative', severity: 'major', tier: 1, platforms: ['meta', 'tiktok', 'linkedin'], description: 'Checks primary ad copy against platform hard limits and warns at recommended limits.' },
+  { id: 'description_char_limit', name: 'Description Character Limit', category: 'Creative', severity: 'major', tier: 1, platforms: ['meta', 'google'], description: 'Descriptions must be within platform character limits (Meta 30 / Google 90).' },
+  { id: 'cta_in_copy', name: 'CTA in Ad Copy', category: 'Creative', severity: 'minor', tier: 1, platforms: ['universal'], description: 'Warns when no call-to-action phrase is detected in headline or primary text.' },
+  { id: 'emoji_in_headline', name: 'Emoji in Headline', category: 'Creative', severity: 'minor', tier: 1, platforms: ['meta', 'google', 'linkedin'], description: 'Flags emojis in headlines — some platforms strip them, causing unexpected truncation.' },
+  // ── Tracking — Tier 2 ───────────────────────────────────────────────────────
+  { id: 'pixel_platform_present', name: 'Platform Pixel Present', category: 'Tracking', severity: 'critical', tier: 2, platforms: ['meta', 'google', 'tiktok', 'linkedin'], description: 'Scans landing page HTML for the correct platform pixel/tag.' },
   { id: 'gtm_present', name: 'Google Tag Manager Present', category: 'Tracking', severity: 'major', tier: 2, platforms: ['universal'], description: 'Detects GTM container snippet on landing pages.' },
-  { id: 'conversion_event_detected', name: 'Conversion Event Signal', category: 'Tracking', severity: 'major', tier: 2, platforms: ['universal'], description: 'Checks for purchase/lead/form conversion event tracking code.' },
+  { id: 'pixel_conversion_event', name: 'Conversion Event Signal', category: 'Tracking', severity: 'major', tier: 2, platforms: ['universal'], description: 'Checks for purchase/lead/form conversion event tracking code.' },
   { id: 'privacy_policy_present', name: 'Privacy Policy Link', category: 'Tracking', severity: 'major', tier: 2, platforms: ['universal'], description: 'Meta and Google require a privacy policy link on landing pages.' },
   { id: 'cookie_consent', name: 'Cookie Consent (GDPR)', category: 'Tracking', severity: 'minor', tier: 2, platforms: ['universal'], description: 'Detects CMP signals (CookieYes, OneTrust, etc) for EU audience compliance.' },
-  // URL — Tier 2
-  { id: 'url_reachability', name: 'URL Reachability', category: 'URL', severity: 'critical', tier: 2, platforms: ['universal'], description: 'Verifies every destination URL returns HTTP 200.' },
+  // ── URL — Tier 2 ────────────────────────────────────────────────────────────
+  { id: 'url_reachable', name: 'URL Reachability', category: 'URL', severity: 'critical', tier: 2, platforms: ['universal'], description: 'Verifies every destination URL returns HTTP 200.' },
   { id: 'url_redirect_depth', name: 'Redirect Depth', category: 'URL', severity: 'major', tier: 2, platforms: ['universal'], description: 'Warns if redirect chains exceed 3 hops — each hop adds latency.' },
-  { id: 'utm_preserved_through_redirect', name: 'UTM Preserved Through Redirects', category: 'UTM', severity: 'major', tier: 2, platforms: ['universal'], description: 'Checks UTM parameters survive all redirect hops.' },
+  { id: 'utm_preserved_through_redirect', name: 'UTM Preserved Through Redirects', category: 'URL', severity: 'major', tier: 2, platforms: ['universal'], description: 'Checks UTM parameters survive all redirect hops.' },
   { id: 'ssl_cert_valid', name: 'SSL Certificate Validity', category: 'URL', severity: 'critical', tier: 2, platforms: ['universal'], description: 'Verifies TLS certificates are valid and not expired.' },
   { id: 'ssl_cert_expiry', name: 'SSL Certificate Expiry', category: 'URL', severity: 'major', tier: 2, platforms: ['universal'], description: 'Warns if certificates expire within 30 days, fails within 7 days.' },
   { id: 'canonical_tag', name: 'Canonical Tag', category: 'URL', severity: 'minor', tier: 2, platforms: ['universal'], description: 'Missing canonical tags allow UTM URLs to be indexed by search engines.' },
-  { id: 'landing_page_title', name: 'Landing Page Title', category: 'URL', severity: 'critical', tier: 2, platforms: ['universal'], description: 'Fails if page title is 404, error, empty — indicates broken destination.' },
+  { id: 'landing_page_title', name: 'Landing Page Title', category: 'URL', severity: 'critical', tier: 2, platforms: ['universal'], description: 'Fails if page title is 404, error, or empty — indicates broken destination.' },
   { id: 'page_load_time', name: 'Page Load Time', category: 'URL', severity: 'major', tier: 2, platforms: ['universal'], description: 'Warns >2s, fails >4s — every second of delay loses ~7% of conversions.' },
   { id: 'mobile_readiness', name: 'Mobile Readiness', category: 'URL', severity: 'major', tier: 2, platforms: ['universal'], description: 'Checks for viewport meta tag — 60-80% of paid social traffic is mobile.' },
   { id: 'security_headers', name: 'HTTP Security Headers', category: 'URL', severity: 'minor', tier: 2, platforms: ['universal'], description: 'Checks for HSTS, X-Content-Type-Options, X-Frame-Options.' },
-  // Content — Tier 2
-  { id: 'og_tags', name: 'Open Graph Tags', category: 'Content', severity: 'minor', tier: 2, platforms: ['universal'], description: 'og:title and og:image present — affects how shared links look on social.' },
-  { id: 'noindex', name: 'Noindex Detection', category: 'Content', severity: 'major', tier: 2, platforms: ['universal'], description: 'Warns if landing page has noindex — blocks search engine indexing of the paid page.' },
+  // ── Content — Tier 2 ────────────────────────────────────────────────────────
+  { id: 'og_tags_present', name: 'Open Graph Tags', category: 'Content', severity: 'minor', tier: 2, platforms: ['universal'], description: 'og:title and og:image present — affects how shared links look on social.' },
+  { id: 'landing_page_not_noindex', name: 'Noindex Detection', category: 'Content', severity: 'major', tier: 2, platforms: ['universal'], description: 'Warns if landing page has noindex — can reduce Quality Score and ad visibility.' },
   { id: 'prohibited_claims', name: 'Prohibited Claims', category: 'Content', severity: 'major', tier: 2, platforms: ['universal'], description: 'Scans ad copy and landing page for language that violates Meta/Google policies.' },
-  { id: 'cookie_consent_body', name: 'Cookie Consent Signal', category: 'Content', severity: 'minor', tier: 2, platforms: ['universal'], description: 'Scans for GDPR consent management signals.' },
-  { id: 'domain_safety', name: 'Domain Safety (VirusTotal)', category: 'Content', severity: 'critical', tier: 2, platforms: ['universal'], description: 'Checks all domains against VirusTotal — flags malware/phishing detections.' },
+  { id: 'virustotal_domain_safety', name: 'Domain Safety (VirusTotal)', category: 'Content', severity: 'critical', tier: 2, platforms: ['universal'], description: 'Checks all domains against VirusTotal — flags malware/phishing detections.' },
 ]
 
 const SEVERITY_COLORS: Record<string, string> = {
