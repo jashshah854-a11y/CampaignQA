@@ -241,6 +241,24 @@ export default function DashboardPage() {
     return () => clearTimeout(t)
   }, [justUpgraded, setSearchParams])
 
+  // After Stripe checkout, webhook processing is async — re-poll profile until plan_tier upgrades
+  useEffect(() => {
+    if (!justUpgraded) return
+    let attempts = 0
+    const poll = setInterval(async () => {
+      attempts++
+      try {
+        const p = await api.getProfile()
+        if (p.plan_tier !== 'free') {
+          setPlanTier(p.plan_tier)
+          clearInterval(poll)
+        }
+      } catch { /* ignore */ }
+      if (attempts >= 8) clearInterval(poll) // stop after ~16s
+    }, 2000)
+    return () => clearInterval(poll)
+  }, [justUpgraded])
+
   useEffect(() => {
     api.listRuns().then(data => setRuns(data as RunRow[])).finally(() => setLoading(false))
     api.getProfile().then(p => {
