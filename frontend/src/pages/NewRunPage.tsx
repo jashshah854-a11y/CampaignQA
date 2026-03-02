@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { api } from '@/lib/api'
 import type { CreateRunPayload } from '@/lib/api'
@@ -74,6 +74,17 @@ export default function NewRunPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [urlMode, setUrlMode] = useState<'paste' | 'csv'>('paste')
+  const [usageInfo, setUsageInfo] = useState<{ used: number; limit: number; plan: string } | null>(null)
+
+  useEffect(() => {
+    api.getProfile()
+      .then(p => {
+        if (p.plan_tier === 'free') {
+          setUsageInfo({ used: p.reports_used, limit: p.reports_limit, plan: p.plan_tier })
+        }
+      })
+      .catch(() => {})
+  }, [])
   const [csvFilename, setCsvFilename] = useState('')
   const [csvEntries, setCsvEntries] = useState<UrlEntry[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -183,6 +194,35 @@ export default function NewRunPage() {
           </button>
         </div>
       </div>
+
+      {/* Free-tier usage indicator */}
+      {usageInfo && (
+        usageInfo.used >= usageInfo.limit ? (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 mb-2">
+            <p className="text-sm font-semibold text-amber-900 mb-1">Free plan limit reached ({usageInfo.used}/{usageInfo.limit} runs)</p>
+            <p className="text-xs text-amber-700 mb-3">Upgrade to Pro for unlimited QA runs, API access, and client-shareable reports.</p>
+            <Link
+              to="/settings"
+              className="text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
+            >
+              Upgrade to Pro — $29/mo →
+            </Link>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
+            <div className="flex gap-0.5">
+              {Array.from({ length: usageInfo.limit }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`w-3 h-3 rounded-sm ${i < usageInfo.used ? 'bg-blue-400' : 'bg-slate-200'}`}
+                />
+              ))}
+            </div>
+            <span>{usageInfo.used}/{usageInfo.limit} free runs used · {usageInfo.limit - usageInfo.used} remaining</span>
+            <Link to="/settings" className="text-blue-600 hover:underline ml-1">Upgrade</Link>
+          </div>
+        )
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Run name */}
@@ -382,7 +422,7 @@ export default function NewRunPage() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || (!!usageInfo && usageInfo.used >= usageInfo.limit)}
           className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-lg py-3 text-sm transition-colors"
         >
           {loading ? 'Running QA checks...' : 'Run QA Check →'}
