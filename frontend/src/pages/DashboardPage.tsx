@@ -222,7 +222,7 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   const [runs, setRuns] = useState<RunRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [upgradeLoading, setUpgradeLoading] = useState(false)
+  const [upgradingPlan, setUpgradingPlan] = useState<'pro' | 'agency' | null>(null)
   const [upgradeError, setUpgradeError] = useState('')
   const [planTier, setPlanTier] = useState<string>('free')
   const [reportsUsed, setReportsUsed] = useState<number | null>(null)
@@ -282,13 +282,13 @@ export default function DashboardPage() {
 
   const handleUpgrade = async (plan: 'pro' | 'agency') => {
     setUpgradeError('')
-    setUpgradeLoading(true)
+    setUpgradingPlan(plan)
     try {
       const { checkout_url } = await api.createCheckoutSession(plan)
       window.location.href = checkout_url
     } catch (err: unknown) {
       setUpgradeError(err instanceof Error ? err.message : 'Could not start checkout')
-      setUpgradeLoading(false)
+      setUpgradingPlan(null)
     }
   }
 
@@ -382,7 +382,9 @@ export default function DashboardPage() {
             <div className="bg-green-50 border border-green-200 rounded-2xl px-5 py-4 mb-6 flex items-center gap-3">
               <span className="text-2xl">🎉</span>
               <div>
-                <p className="text-sm font-semibold text-green-800">You're all set! Welcome to LaunchProof Pro.</p>
+                <p className="text-sm font-semibold text-green-800">
+                  You're all set! Welcome to LaunchProof {planTier === 'agency' ? 'Agency' : 'Pro'}.
+                </p>
                 <p className="text-xs text-green-600 mt-0.5">Unlimited runs, client-shareable reports, and API access are now active.</p>
               </div>
             </div>
@@ -417,7 +419,9 @@ export default function DashboardPage() {
             <div className="bg-green-50 border border-green-200 rounded-2xl px-5 py-4 mb-4 flex items-center gap-3">
               <span className="text-2xl">🎉</span>
               <div>
-                <p className="text-sm font-semibold text-green-800">You're all set! Welcome to LaunchProof Pro.</p>
+                <p className="text-sm font-semibold text-green-800">
+                  You're all set! Welcome to LaunchProof {planTier === 'agency' ? 'Agency' : 'Pro'}.
+                </p>
                 <p className="text-xs text-green-600 mt-0.5">Unlimited runs, client-shareable reports, and API access are now active.</p>
               </div>
             </div>
@@ -441,17 +445,17 @@ export default function DashboardPage() {
                 <div className="flex gap-2 flex-shrink-0">
                   <button
                     onClick={() => handleUpgrade('pro')}
-                    disabled={upgradeLoading}
+                    disabled={upgradingPlan !== null}
                     className="bg-white text-blue-700 font-semibold text-sm px-4 py-2 rounded-lg hover:bg-blue-50 disabled:opacity-60 transition-colors"
                   >
-                    Pro — $29/mo
+                    {upgradingPlan === 'pro' ? 'Redirecting…' : 'Pro — $29/mo'}
                   </button>
                   <button
                     onClick={() => handleUpgrade('agency')}
-                    disabled={upgradeLoading}
+                    disabled={upgradingPlan !== null}
                     className="bg-blue-500 hover:bg-blue-400 disabled:opacity-60 text-white font-semibold text-sm px-4 py-2 rounded-lg transition-colors"
                   >
-                    Agency — $79/mo
+                    {upgradingPlan === 'agency' ? 'Redirecting…' : 'Agency — $79/mo'}
                   </button>
                 </div>
               </div>
