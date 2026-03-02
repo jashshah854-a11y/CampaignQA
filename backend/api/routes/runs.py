@@ -238,8 +238,8 @@ async def get_run_report(run_id: str, user: dict = Depends(get_current_user)):
         urls=urls.data or [],
         shareable_url=share_url,
     )
-    # Append notes (extra field not in Pydantic model)
-    return {**report.dict(), "notes": r.get("notes")}
+    # Append extra fields not in Pydantic model
+    return {**report.dict(), "notes": r.get("notes"), "is_public": r.get("is_public", False)}
 
 
 @router.get("", response_model=list[dict])

@@ -24,6 +24,7 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
   const [error, setError] = useState('')
   const [activeFilter, setActiveFilter] = useState<string>('all')
   const [shareMsg, setShareMsg] = useState('')
+  const [isPublic, setIsPublic] = useState(false)
   const [rerunning, setRerunning] = useState(false)
   const [compareRuns, setCompareRuns] = useState<{ id: string; run_name: string }[]>([])
   const [showCompare, setShowCompare] = useState(false)
@@ -40,6 +41,7 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
           : await api.getReport(runId!)
         setReport(data)
         setNotes(data.notes || '')
+        setIsPublic(data.is_public ?? false)
         document.title = shared
           ? `${data.run_name} — LaunchProof Report`
           : `${data.run_name} — LaunchProof`
@@ -123,11 +125,12 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
   const handleEnableShare = async () => {
     if (!report || !runId) return
     try {
-      await api.toggleShare(runId, true)
-      const newReport = await api.getReport(runId)
-      setReport(newReport)
-      if (newReport.shareable_url) {
-        await navigator.clipboard.writeText(newReport.shareable_url)
+      if (!isPublic) {
+        await api.toggleShare(runId, true)
+        setIsPublic(true)
+      }
+      if (report.shareable_url) {
+        await navigator.clipboard.writeText(report.shareable_url)
         setShareMsg('Link copied!')
         setTimeout(() => setShareMsg(''), 3000)
       }
@@ -222,6 +225,10 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
           <h1 className="text-2xl font-bold text-slate-900">{report.run_name}</h1>
           <p className="text-slate-500 text-sm mt-1">
             {report.platform.toUpperCase()} · {new Date(report.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+            {report.completed_at && (() => {
+              const secs = Math.round((new Date(report.completed_at!).getTime() - new Date(report.created_at).getTime()) / 1000)
+              return secs > 0 ? <span className="ml-2 text-slate-400">· {secs}s QA time</span> : null
+            })()}
           </p>
         </div>
         {!shared && (
@@ -258,9 +265,15 @@ export default function ReportPage({ shared = false }: { shared?: boolean }) {
               </button>
               <button
                 onClick={handleEnableShare}
-                className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2 rounded-lg transition-colors"
+                className={cn(
+                  'text-sm font-medium px-4 py-2 rounded-lg transition-colors',
+                  isPublic
+                    ? 'bg-green-100 hover:bg-green-200 text-green-700'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                )}
+                title={isPublic ? 'Copy the public share link' : 'Enable public sharing and copy link'}
               >
-                Share Report
+                {isPublic ? '🔗 Copy Link' : 'Share Report'}
               </button>
               <div className="relative">
                 <button

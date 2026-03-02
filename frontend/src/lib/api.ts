@@ -92,6 +92,7 @@ export interface RunReport {
   urls: { id: string; raw_url: string; ad_name?: string; ad_set_name?: string; campaign_name?: string }[]
   shareable_url?: string
   notes?: string
+  is_public?: boolean
 }
 
 export interface CreateRunResponse {

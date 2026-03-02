@@ -335,6 +335,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-5 text-xs text-slate-400">
             <Link to="/login" className="hover:text-slate-600">Dashboard</Link>
             <Link to="/checks" className="hover:text-slate-600">All 46 checks</Link>
+            <Link to="/demo" className="hover:text-slate-600">Example report</Link>
             <a href="#pricing" className="hover:text-slate-600">Pricing</a>
             <a href="mailto:jashshah854@gmail.com" className="hover:text-slate-600">Contact</a>
           </div>
