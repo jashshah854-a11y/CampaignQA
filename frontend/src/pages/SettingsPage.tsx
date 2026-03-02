@@ -37,7 +37,7 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [upgradeLoading, setUpgradeLoading] = useState(false)
+  const [upgradingPlan, setUpgradingPlan] = useState<'pro' | 'agency' | null>(null)
   const [portalLoading, setPortalLoading] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
   const [error, setError] = useState('')
@@ -103,13 +103,13 @@ export default function SettingsPage() {
   }
 
   const handleUpgrade = async (plan: 'pro' | 'agency') => {
-    setUpgradeLoading(true)
+    setUpgradingPlan(plan)
     try {
       const { checkout_url } = await api.createCheckoutSession(plan)
       window.location.href = checkout_url
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Could not start checkout')
-      setUpgradeLoading(false)
+      setUpgradingPlan(null)
     }
   }
 
@@ -181,17 +181,17 @@ export default function SettingsPage() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleUpgrade('pro')}
-                disabled={upgradeLoading}
+                disabled={upgradingPlan !== null}
                 className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold text-sm px-4 py-2.5 rounded-lg transition-colors"
               >
-                Upgrade to Pro — $29/mo
+                {upgradingPlan === 'pro' ? 'Redirecting…' : 'Upgrade to Pro — $29/mo'}
               </button>
               <button
                 onClick={() => handleUpgrade('agency')}
-                disabled={upgradeLoading}
+                disabled={upgradingPlan !== null}
                 className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-sm px-4 py-2.5 rounded-lg transition-colors"
               >
-                Upgrade to Agency — $79/mo
+                {upgradingPlan === 'agency' ? 'Redirecting…' : 'Upgrade to Agency — $79/mo'}
               </button>
             </div>
           </>
