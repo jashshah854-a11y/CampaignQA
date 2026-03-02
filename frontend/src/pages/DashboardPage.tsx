@@ -94,6 +94,7 @@ function RunMenu({
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [rerunning, setRerunning] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -109,19 +110,40 @@ function RunMenu({
 
   const otherCompleted = allRuns.filter(r => r.id !== runId && r.status === 'completed')
 
+  const handleRerun = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setRerunning(true)
+    setOpen(false)
+    try {
+      const res = await api.rerun(runId)
+      navigate(`/runs/${res.run_id}`)
+    } catch {
+      setRerunning(false)
+    }
+  }
+
   return (
     <div ref={ref} className="relative flex-shrink-0" onClick={e => e.preventDefault()}>
       <button
         onClick={() => setOpen(o => !o)}
-        className="text-slate-300 hover:text-slate-500 px-1 text-lg leading-none"
+        disabled={rerunning}
+        className="text-slate-300 hover:text-slate-500 px-1 text-lg leading-none disabled:opacity-40"
         aria-label="Run options"
       >
-        ⋯
+        {rerunning ? '…' : '⋯'}
       </button>
       {open && (
         <div className="absolute right-0 top-7 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-10 min-w-[160px]">
           {!confirming ? (
             <>
+              {runStatus === 'completed' && (
+                <button
+                  onClick={handleRerun}
+                  className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 font-medium"
+                >
+                  ↺ Re-run checks
+                </button>
+              )}
               {runStatus === 'completed' && otherCompleted.length > 0 && (
                 <div className="border-b border-slate-100 pb-1 mb-1">
                   <p className="text-xs text-slate-400 px-4 pt-1 pb-0.5 font-medium">Compare with:</p>
