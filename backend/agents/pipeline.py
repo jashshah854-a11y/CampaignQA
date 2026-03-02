@@ -119,17 +119,26 @@ def update_run_summary(run_id: str, all_results: list[CheckResult], status: str 
 
 
 def _notify_user(user_id: str, run_id: str, run_name: str, score: float) -> None:
-    """Send run-complete email and/or Slack notification. Silently no-ops on any failure."""
+    """Send run-complete email, Slack, and/or generic webhook notifications. Silently no-ops on failure."""
     try:
         from utils.email import send_run_complete_email
         from utils.slack import send_slack_notification
+        from utils.webhook import send_webhook_notification
         from core.config import get_settings
         db = get_supabase_admin()
-        profile_row = db.table("profiles").select("email,slack_webhook_url").eq("id", user_id).single().execute()
+        profile_row = db.table("profiles").select(
+            "email,slack_webhook_url,webhook_url"
+        ).eq("id", user_id).single().execute()
         profile = profile_row.data or {}
         settings = get_settings()
         origin = settings.cors_origins_list[0].rstrip("/")
         run_url = f"{origin}/runs/{run_id}/report"
+
+        # Fetch run summary for webhook payload
+        run_row = db.table("qa_runs").select(
+            "platform,status,passed_checks,failed_checks,warning_checks"
+        ).eq("id", run_id).single().execute()
+        run_data = run_row.data or {}
 
         email = profile.get("email")
         if email:
@@ -138,6 +147,21 @@ def _notify_user(user_id: str, run_id: str, run_name: str, score: float) -> None
         slack_webhook = profile.get("slack_webhook_url")
         if slack_webhook:
             send_slack_notification(slack_webhook, run_name, score, run_url)
+
+        generic_webhook = profile.get("webhook_url")
+        if generic_webhook:
+            send_webhook_notification(
+                webhook_url=generic_webhook,
+                run_id=run_id,
+                run_name=run_name,
+                platform=run_data.get("platform", ""),
+                score=score,
+                status=run_data.get("status", "completed"),
+                passed=run_data.get("passed_checks") or 0,
+                failed=run_data.get("failed_checks") or 0,
+                warnings=run_data.get("warning_checks") or 0,
+                run_url=run_url,
+            )
     except Exception:
         pass
 

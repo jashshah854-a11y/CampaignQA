@@ -39,7 +39,7 @@ export default function SettingsPage() {
   const [saveMsg, setSaveMsg] = useState('')
   const [error, setError] = useState('')
 
-  const [form, setForm] = useState({ full_name: '', company_name: '', slack_webhook_url: '' })
+  const [form, setForm] = useState({ full_name: '', company_name: '', slack_webhook_url: '', webhook_url: '' })
 
   // API Keys state
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([])
@@ -57,6 +57,7 @@ export default function SettingsPage() {
           full_name: p.full_name || '',
           company_name: p.company_name || '',
           slack_webhook_url: p.slack_webhook_url || '',
+          webhook_url: (p as unknown as { webhook_url?: string }).webhook_url || '',
         })
         if (p.plan_tier !== 'free') {
           setKeysLoading(true)
@@ -248,6 +249,29 @@ export default function SettingsPage() {
             {isPaid && (
               <p className="text-xs text-slate-400 mt-1">
                 Receive a Slack message when each QA run completes. Create a webhook in your Slack App settings.
+              </p>
+            )}
+          </div>
+
+          {/* Generic webhook — for n8n, Zapier, Make, custom endpoints */}
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1">
+              Outbound Webhook URL
+              {!isPaid && <span className="ml-2 text-slate-400">(Pro/Agency only)</span>}
+            </label>
+            <input
+              value={form.webhook_url}
+              onChange={e => setForm(f => ({ ...f, webhook_url: e.target.value }))}
+              placeholder="https://hook.n8n.cloud/... or https://hooks.zapier.com/..."
+              disabled={!isPaid}
+              className={cn(
+                'w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
+                isPaid ? 'border-slate-300' : 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed',
+              )}
+            />
+            {isPaid && (
+              <p className="text-xs text-slate-400 mt-1">
+                POST a JSON payload to any URL when a run completes. Compatible with n8n, Zapier, Make, and custom endpoints.
               </p>
             )}
           </div>

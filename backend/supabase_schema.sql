@@ -208,3 +208,6 @@ CREATE INDEX idx_api_keys_key_hash ON api_keys (key_hash);
 
 -- Run notes — user-editable annotation on any run
 ALTER TABLE qa_runs ADD COLUMN IF NOT EXISTS notes text;
+
+-- Generic outbound webhook URL (POST JSON payload on run complete — n8n/Zapier/Make compatible)
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS webhook_url text;

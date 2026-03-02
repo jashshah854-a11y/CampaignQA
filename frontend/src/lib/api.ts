@@ -132,7 +132,7 @@ export const api = {
   getProfile: () =>
     apiFetch<{ id: string; email: string; full_name: string | null; company_name: string | null; plan_tier: string; reports_used: number; reports_limit: number; created_at: string }>('/api/v1/profile'),
 
-  updateProfile: (data: { full_name?: string; company_name?: string; slack_webhook_url?: string }) =>
+  updateProfile: (data: { full_name?: string; company_name?: string; slack_webhook_url?: string; webhook_url?: string }) =>
     apiFetch<{ status: string }>('/api/v1/profile', { method: 'PATCH', body: JSON.stringify(data) }),
 
   createCheckoutSession: (plan: 'pro' | 'agency') =>
