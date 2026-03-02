@@ -13,6 +13,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   budget: 'Budget',
   tracking: 'Tracking',
   audience: 'Audience',
+  content: 'Content Safety',
 }
 
 export default function ReportPage({ shared = false }: { shared?: boolean }) {

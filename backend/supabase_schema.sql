@@ -211,3 +211,14 @@ ALTER TABLE qa_runs ADD COLUMN IF NOT EXISTS notes text;
 
 -- Generic outbound webhook URL (POST JSON payload on run complete — n8n/Zapier/Make compatible)
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS webhook_url text;
+
+-- Helper RPC to refresh benchmark materialized view (called from server startup)
+-- Run this migration ONCE in Supabase SQL Editor
+CREATE OR REPLACE FUNCTION refresh_benchmark_view()
+RETURNS void AS $$
+BEGIN
+  REFRESH MATERIALIZED VIEW CONCURRENTLY benchmark_snapshots;
+EXCEPTION WHEN OTHERS THEN
+  NULL; -- silently skip if view is empty or can't refresh concurrently yet
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

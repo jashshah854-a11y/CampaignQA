@@ -48,6 +48,8 @@ async def test_webhook(user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="No webhook URL configured. Save one in Settings first.")
 
     from utils.webhook import send_webhook_notification
+    from core.config import get_settings
+    _settings = get_settings()
     send_webhook_notification(
         webhook_url=webhook_url,
         run_id="test-00000000-0000-0000-0000-000000000000",
@@ -58,6 +60,6 @@ async def test_webhook(user: dict = Depends(get_current_user)):
         passed=15,
         failed=2,
         warnings=1,
-        run_url="https://app.launchproof.io",
+        run_url=f"{_settings.app_base_url.rstrip('/')}/dashboard",
     )
     return {"status": "sent", "webhook_url": webhook_url[:30] + "…"}
