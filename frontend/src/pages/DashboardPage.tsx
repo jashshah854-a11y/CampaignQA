@@ -347,13 +347,23 @@ export default function DashboardPage() {
             <Link to="/api-docs" className="text-sm text-slate-500 hover:text-slate-700">API</Link>
           )}
           <Link to="/settings" className="text-sm text-slate-500 hover:text-slate-700">Settings</Link>
-          <Link
-            to="/new"
-            title="Shortcut: N"
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors"
-          >
-            + New QA Run
-          </Link>
+          {planTier === 'free' && reportsUsed !== null && reportsLimit !== null && reportsUsed >= reportsLimit ? (
+            <Link
+              to="/settings"
+              title="Free plan limit reached — upgrade to continue"
+              className="bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors"
+            >
+              Upgrade to run more →
+            </Link>
+          ) : (
+            <Link
+              to="/new"
+              title="Shortcut: N"
+              className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors"
+            >
+              + New QA Run
+            </Link>
+          )}
           <button onClick={signOut} className="text-sm text-slate-500 hover:text-slate-700">Sign out</button>
         </div>
       </div>
